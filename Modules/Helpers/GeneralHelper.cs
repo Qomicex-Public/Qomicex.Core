@@ -453,13 +453,18 @@ namespace Qomicex.Core.Modules.Helpers
         public static bool VerifyFileSha1(string filePath, string expectedHash)
         {
             if (!File.Exists(filePath)) { return false; }
-            using (FileStream stream = File.OpenRead(filePath))
-            using (SHA1 sha1 = SHA1.Create())
+            try
             {
-                byte[] hashBytes = sha1.ComputeHash(stream);
-                string actualHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
-                return actualHash.Trim().Equals(expectedHash.Trim(), StringComparison.OrdinalIgnoreCase);
+                using (FileStream stream = File.OpenRead(filePath))
+                using (SHA1 sha1 = SHA1.Create())
+                {
+                    byte[] hashBytes = sha1.ComputeHash(stream);
+                    string actualHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+                    return actualHash.Trim().Equals(expectedHash.Trim(), StringComparison.OrdinalIgnoreCase);
+                }
             }
+            catch (IOException) { return false; }
+            catch (UnauthorizedAccessException) { return false; }
         }
 
         public List<string> SearchVersionsFast(string GameDir)
