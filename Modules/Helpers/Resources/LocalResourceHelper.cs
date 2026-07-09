@@ -552,8 +552,8 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                     throw new Exception("库文件路径或哈希值不能为空");
                 }
             }
-            var missMainJar = await GetMissMainJarAsync(version, gameDir)!;
-            if (!string.IsNullOrEmpty(missMainJar!.Path))
+            var missMainJar = await GetMissMainJarAsync(version, gameDir);
+            if (missMainJar is not null && !string.IsNullOrEmpty(missMainJar.Path))
             {
                 missFiles.Add(missMainJar);
             }
@@ -617,8 +617,8 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                     throw new Exception("库文件路径或哈希值不能为空");
                 }
             }
-            var missMainJar = await GetMissMainJarFromJsonAsync(JsonContent, versionId, gameDir)!;
-            if (!string.IsNullOrEmpty(missMainJar!.Path))
+            var missMainJar = await GetMissMainJarFromJsonAsync(JsonContent, versionId, gameDir);
+            if (missMainJar is not null && !string.IsNullOrEmpty(missMainJar.Path))
             {
                 missFiles.Add(missMainJar);
             }
