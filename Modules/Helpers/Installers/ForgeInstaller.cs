@@ -87,7 +87,10 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             try
             {
                 //检查安装器
-                string profileName = installProfileJson["profile"]?.ToString() ?? string.Empty;
+                string profileName = string.IsNullOrEmpty(installProfileJson["profile"]?.ToString())
+                    ? installProfileJson["install"]?["profileName"]?.ToString() ?? string.Empty
+                    : installProfileJson["profile"]?.ToString();
+
                 if (profileName != "forge")
                 {
                     throw new Exception("安装器版本不正确，请检查安装器文件是否正确");
@@ -245,26 +248,37 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             var installProfileData = string.Empty;
             try
             {
-                jsonData = Encoding.UTF8.GetString(GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, "version.json"));
                 installProfileData = Encoding.UTF8.GetString(GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, "install_profile.json"));
-
-                if (string.IsNullOrEmpty(jsonData))
-                    throw new FileLoadException("提取的version.json内容为空");
-                if (string.IsNullOrEmpty(installProfileData))
-                    throw new FileLoadException("提取的install_profile.json内容为空");
             }
-            catch (Exception e)
+            catch
             {
-                throw new Exception("读取Forge安装器内容失败，请检查安装器文件是否正确", e);
+                throw new Exception("读取Forge安装器内容失败，请检查安装器文件是否正确");
+            }
+            try
+            {
+                jsonData = Encoding.UTF8.GetString(GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, "version.json"));
+            }
+            catch
+            {
+                if (!IsLegacyForgeInstaller(forgeInstallerPath))
+                {
+                    throw new Exception("读取Forge安装器内容失败，请检查安装器文件是否正确");
+                } 
             }
 
             var installProfileJson = JObject.Parse(installProfileData!);
 
+            if (string.IsNullOrEmpty(jsonData))
+                jsonData = installProfileJson["versionInfo"]?.ToString() ?? throw new Exception("无法找到版本Json信息");
+            
             //处理Json
             try
             {
                 //检查安装器
-                string profileName = installProfileJson["profile"]?.ToString() ?? string.Empty;
+                string profileName = string.IsNullOrEmpty(installProfileJson["profile"]?.ToString())
+                    ? installProfileJson["install"]?["profileName"]?.ToString() ?? string.Empty
+                    : installProfileJson["profile"]?.ToString();
+
                 if (profileName != "forge")
                 {
                     throw new Exception("安装器版本不正确，请检查安装器文件是否正确");
@@ -316,8 +330,9 @@ namespace Qomicex.Core.Modules.Helpers.Installers
 
             //解压Forge Jar
             //提取并写入Forge主Jar文件
-            var jarMavenPath = MavenToPath(installProfileJson["path"]?.ToString()!);
-            var forgeJar = GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, $@"maven/{jarMavenPath}");
+            var jarMavenPath = MavenToPath(installProfileJson["install"]?["path"]?.ToString()!);
+            var filePath = installProfileJson["install"]?["filePath"]?.ToString();
+            var forgeJar = GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, filePath);
             var jarFullPath = Path.Combine(this.gameDir, "libraries", jarMavenPath);
             var jarDir = Path.GetDirectoryName(jarFullPath);
 
@@ -369,7 +384,11 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             try
             {
                 var installProfileJson = JObject.Parse(installProfileData!);
-                string profileName = installProfileJson["profile"]?.ToString() ?? string.Empty;
+                string profileName = string.IsNullOrEmpty(installProfileJson["profile"]?.ToString())
+                    ? installProfileJson["install"]?["profileName"]?.ToString() ?? string.Empty
+                    : installProfileJson["profile"]?.ToString();
+
+                Trace.WriteLine($"Forge安装器profileName: {profileName}");
 
                 if (profileName != "forge")
                 {
@@ -462,7 +481,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             }
             catch
             {
-                if (IsLegacyForgeInstaller(forgeInstallerPath))
+                if (!IsLegacyForgeInstaller(forgeInstallerPath))
                 {
                     throw new Exception("读取Forge安装器内容失败，请检查安装器文件是否正确");
                 } 
@@ -471,7 +490,10 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             //获取缺失 libs
             var libs = new List<LocalResourceHelper.LibInfo>();
             var installProfileJson = JObject.Parse(installProfileData!);
-            var profileLibraries = installProfileJson["libraries"] as JArray;
+
+            var profileLibraries = installProfileJson.ContainsKey("libraries")
+            ? installProfileJson["libraries"] as JArray
+            : installProfileJson["versionInfo"]?["libraries"] as JArray;
 
             foreach (var lib in profileLibraries!)
             {

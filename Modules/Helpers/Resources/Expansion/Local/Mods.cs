@@ -134,7 +134,25 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                             var firstMod = (TomlTable)mods[0];
                             modInfo.Name = firstMod.TryGetValue("displayName", out var dn) ? dn?.ToString() ?? "Unknown" : "Unknown";
                             modInfo.Description = firstMod.TryGetValue("description", out var desc) ? desc?.ToString() ?? "" : "";
-                            modInfo.Version = firstMod.TryGetValue("version", out var ver) ? ver?.ToString() ?? "" : "";
+                            modInfo.Version = firstMod.TryGetValue("version", out var ver) 
+                            ? ver?.ToString() ?? "" 
+                            : "";
+
+                            if (modInfo.Version == "${file.jarVersion}")
+                            {
+                                var metaData = ReadZipEntry(archive, "META-INF/MANIFEST.MF") ?? string.Empty;
+                                var metaItems = metaData.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+
+                                foreach (var item in metaItems)
+                                {
+                                    if (item.StartsWith("Implementation-Version:", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        modInfo.Version = item.Substring("Implementation-Version:".Length).Trim();
+                                        break;
+                                    }
+                                }
+                            }
+
                             if (firstMod.TryGetValue("authors", out var aut) && aut is string autStr)
                                 modInfo.Authors = autStr.Split(',').Select(a => a.Trim()).ToArray();
 
