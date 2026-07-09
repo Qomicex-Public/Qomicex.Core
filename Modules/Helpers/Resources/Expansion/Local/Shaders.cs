@@ -122,17 +122,17 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
 
         public class ShaderInfo
         {
-            public string Name { get; set; }
-            public string Description { get; set; }
-            public string Version { get; set; }
-            public string FilePath { get; set; }
-            public string Icon { get; set; }
+            public string Name { get; set; } = string.Empty;
+            public string Description { get; set; } = string.Empty;
+            public string Version { get; set; } = string.Empty;
+            public string FilePath { get; set; } = string.Empty;
+            public string Icon { get; set; } = string.Empty;
             public int CurseForgeId { get; set; }
-            public string ModrinthId { get; set; }
-            public string Sha1Hash { get; set; }
+            public string ModrinthId { get; set; } = string.Empty;
+            public string Sha1Hash { get; set; } = string.Empty;
             public long CFHash { get; set; }
-            public CurseForgeBase.FingerprintsFilesMeta CurseForgeMeta { get; set; }
-            public ModrinthBase.ProjectVersionInfo ModrinthMeta { get; set; }
+            public CurseForgeBase.FingerprintsFilesMeta? CurseForgeMeta { get; set; }
+            public ModrinthBase.ProjectVersionInfo? ModrinthMeta { get; set; }
         }
     }
 }

@@ -283,7 +283,7 @@ public sealed class MemoryIssueAnalyzer
             }
 
             // 替换参数变量
-            foreach (var param in solution.Parameters)
+            foreach (var param in solution.Parameters!)
             {
                 description = description.Replace($"{{{param.Key}}}", param.Value?.ToString() ?? "");
             }

@@ -49,7 +49,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
             return entries;
         }
 
-        private static JObject ReadMcmetaFromZip(string zipPath)
+        private static JObject? ReadMcmetaFromZip(string zipPath)
         {
             var bytes = TryReadFileFromZip(zipPath, "pack.mcmeta");
             if (bytes == null)
@@ -66,7 +66,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
             }
         }
 
-        private static JObject ReadMcmetaFromFolder(string folderPath)
+        private static JObject? ReadMcmetaFromFolder(string folderPath)
         {
             string mcmetaPath = Path.Combine(folderPath, "pack.mcmeta");
             if (!File.Exists(mcmetaPath))
@@ -158,7 +158,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                 Trace.WriteLine($"Fetching datapack: {entry}");
                 bool isDirectory = Directory.Exists(entry);
 
-                JObject mcmeta = isDirectory
+                JObject? mcmeta = isDirectory
                     ? ReadMcmetaFromFolder(entry)
                     : ReadMcmetaFromZip(entry);
 
@@ -239,19 +239,19 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
 
         public class DataPackInfo
         {
-            public string Name { get; set; }
-            public string Description { get; set; }
-            public string Version { get; set; }
-            public string FilePath { get; set; }
+            public string Name { get; set; } = string.Empty;
+            public string Description { get; set; } = string.Empty;
+            public string Version { get; set; } = string.Empty;
+            public string FilePath { get; set; } = string.Empty;
             public bool IsDirectory { get; set; }
             public int PackFormat { get; set; }
-            public string Icon { get; set; }
+            public string Icon { get; set; } = string.Empty;
             public int CurseForgeId { get; set; }
-            public string ModrinthId { get; set; }
-            public string Sha1Hash { get; set; }
+            public string ModrinthId { get; set; } = string.Empty;
+            public string Sha1Hash { get; set; } = string.Empty;
             public long CFHash { get; set; }
-            public CurseForgeBase.FingerprintsFilesMeta CurseForgeMeta { get; set; }
-            public ModrinthBase.ProjectVersionInfo ModrinthMeta { get; set; }
+            public CurseForgeBase.FingerprintsFilesMeta? CurseForgeMeta { get; set; }
+            public ModrinthBase.ProjectVersionInfo? ModrinthMeta { get; set; }
         }
     }
 }

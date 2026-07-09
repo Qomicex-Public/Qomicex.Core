@@ -47,7 +47,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
         /// <summary>
         /// 尝试从 zip 中读取指定文件，未找到时返回 null 而不是抛异常
         /// </summary>
-        internal static byte[] TryReadFileFromZip(string path, string fileName)
+        internal static byte[]? TryReadFileFromZip(string path, string fileName)
         {
             try
             {

@@ -71,30 +71,32 @@ namespace Qomicex.Core.Modules.Helpers.Installers.Modpacks
             info.Description = json["summary"]?.ToString() ?? string.Empty;
             info.Version = json["versionId"]?.ToString() ?? string.Empty;
 
-            JObject deps = (JObject)json["dependencies"];
-            // 遍历所有依赖
-            foreach (var prop in deps.Properties())
+            var deps = json["dependencies"] as JObject;
+            if (deps != null)
             {
-                string loaderType = prop.Name;
-                string loaderVersion = (string)prop.Value;
-
-                if (loaderType == "minecraft")
-                    info.GameVersion = loaderVersion;
-                else if (loaderType == "quilt-loader" || loaderType == "fabric-loader" || loaderType == "forge")
+                foreach (var prop in deps.Properties())
                 {
-                    info.ModLoader = loaderType switch
+                    string loaderType = prop.Name;
+                    string loaderVersion = prop.Value?.ToString() ?? "";
+
+                    if (loaderType == "minecraft")
+                        info.GameVersion = loaderVersion;
+                    else if (loaderType == "quilt-loader" || loaderType == "fabric-loader" || loaderType == "forge")
                     {
-                        "quilt-loader" => ModLoaderType.Quilt,
-                        "fabric-loader" => ModLoaderType.Fabric,
-                        "forge" => ModLoaderType.Forge,
-                        "neoforge" => ModLoaderType.NeoForge,
-                        _ => ModLoaderType.Unknown
-                    };
-                    info.ModLoaderVersion = loaderVersion;
+                        info.ModLoader = loaderType switch
+                        {
+                            "quilt-loader" => ModLoaderType.Quilt,
+                            "fabric-loader" => ModLoaderType.Fabric,
+                            "forge" => ModLoaderType.Forge,
+                            "neoforge" => ModLoaderType.NeoForge,
+                            _ => ModLoaderType.Unknown
+                        };
+                        info.ModLoaderVersion = loaderVersion;
+                    }
                 }
             }
             
-            var filesArray = json["files"] as JArray;
+            var filesArray = json["files"] as JArray ?? [];
             var basePath = _versionIsolation ? Path.Combine(_gameDir, "versions", versionId) : _gameDir;
             foreach (var file in filesArray)
             {

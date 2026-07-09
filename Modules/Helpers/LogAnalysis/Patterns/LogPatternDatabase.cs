@@ -133,8 +133,8 @@ public sealed class LogPatternDatabase
                     foreach (var lang in i18n)
                     {
                         i18nNames[lang.Key] = new I18nInfo(
-                            Name: lang.Value["name"]?.ToString() ?? "",
-                            Description: lang.Value["description"]?.ToString() ?? ""
+                            Name: lang.Value?["name"]?.ToString() ?? "",
+                            Description: lang.Value?["description"]?.ToString() ?? ""
                         );
                     }
                 }

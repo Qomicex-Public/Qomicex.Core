@@ -34,7 +34,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
             return Directory.GetDirectories(savesDirectory).ToList();
         }
 
-        private static string ReadLevelName(string saveDirectory)
+        private static string? ReadLevelName(string saveDirectory)
         {
             string levelDatPath = Path.Combine(saveDirectory, "level.dat");
             if (!File.Exists(levelDatPath))
@@ -180,7 +180,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
             {
                 WriteLevelName(saveDirectory, newName);
 
-                string parentDir = Path.GetDirectoryName(saveDirectory);
+                string parentDir = Path.GetDirectoryName(saveDirectory)!;
                 string newPath = Path.Combine(parentDir, newName);
 
                 if (Directory.Exists(newPath))
@@ -202,7 +202,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
 
             string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
             string saveName = Path.GetFileName(saveDirectory);
-            string parentDir = Path.GetDirectoryName(saveDirectory);
+            string parentDir = Path.GetDirectoryName(saveDirectory)!;
             string backupPath = Path.Combine(parentDir, $"{saveName}_backup_{timestamp}");
 
             if (Directory.Exists(backupPath))
@@ -230,10 +230,10 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
 
         public class SaveInfo
         {
-            public string Name { get; set; }
-            public string FilePath { get; set; }
+            public string Name { get; set; } = string.Empty;
+            public string FilePath { get; set; } = string.Empty;
             public long LastPlayed { get; set; }
-            public string Icon { get; set; }
+            public string Icon { get; set; } = string.Empty;
         }
 
         #region NBT Parser
@@ -580,7 +580,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
         private sealed class NbtList
         {
             public byte ElementType;
-            public NbtValue[] Items;
+            public NbtValue[] Items = null!;
         }
 
         private static class NbtTagType

@@ -81,7 +81,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers.Modpacks
             info.Version = json["version"]?.ToString() ?? string.Empty;
 
             info.GameVersion = json["minecraft"]?["version"]?.ToString() ?? string.Empty;
-            JArray loaders = (JArray)json["minecraft"]?["modLoaders"];
+            var loaders = json["minecraft"]?["modLoaders"] as JArray ?? [];
 
             var loaderType = string.Empty;
 
@@ -103,7 +103,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers.Modpacks
                 _ => ModLoaderType.Unknown
             };
 
-            var filesArray = json["files"] as JArray;
+            var filesArray = json["files"] as JArray ?? [];
             foreach (var file in filesArray)
             {
                 if (file["required"]?.ToObject<bool>() != true)

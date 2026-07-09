@@ -143,7 +143,7 @@ namespace Qomicex.Core.Modules.Helpers
                             if (!string.IsNullOrEmpty(value)) return value;
                         }
                     }
-                    string name = null, version = null;
+                    string? name = null, version = null;
                     foreach (var line in System.IO.File.ReadAllLines("/etc/os-release"))
                     {
                         if (line.StartsWith("NAME=")) name = line.Substring("NAME=".Length).Trim('"', '\'');

@@ -194,7 +194,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
             [JsonProperty("id")]
             public string FileId { get; set; } = string.Empty;
             [JsonProperty("dependencies")]
-            public CurseForgeDependenciesMeta Dependencies { get; set; }
+            public CurseForgeDependenciesMeta? Dependencies { get; set; }
         }
         public class CurseForgeDependenciesMeta
         {

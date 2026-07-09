@@ -58,7 +58,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
             return authorsToken.Select(a =>
             {
                 if (a is JObject obj && obj["name"] != null)
-                    return obj["name"].ToString();
+                    return obj["name"]!.ToString();
                 return a.ToString();
             }).ToArray();
         }
@@ -111,14 +111,14 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                 {
                     using var archive = new ZipArchive(new MemoryStream(fileBytes), ZipArchiveMode.Read);
 
-                    string fabricContent = ReadZipEntry(archive, "fabric.mod.json");
+                    string? fabricContent = ReadZipEntry(archive, "fabric.mod.json");
                     if (fabricContent != null)
                     {
                         JObject json = JObject.Parse(fabricContent);
                         modInfo.Name = json["name"]?.ToString() ?? "Unknown";
                         modInfo.Version = json["version"]?.ToString() ?? "";
                         modInfo.Description = json["description"]?.ToString() ?? "No description available";
-                        modInfo.Authors = ExtractFabricAuthors(json["authors"]);
+                        modInfo.Authors = ExtractFabricAuthors(json["authors"]!);
 
                         var iconPath = json["icon"]?.ToString();
                         if (!string.IsNullOrEmpty(iconPath))
@@ -126,7 +126,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                     }
                     else
                     {
-                        string tomlContent = ReadZipEntry(archive, "META-INF/mods.toml");
+                        string? tomlContent = ReadZipEntry(archive, "META-INF/mods.toml");
                         if (tomlContent != null)
                         {
                             var model = Toml.ToModel(tomlContent);
@@ -161,7 +161,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                         }
                         else
                         {
-                            string mcmodContent = ReadZipEntry(archive, "mcmod.info");
+                            string? mcmodContent = ReadZipEntry(archive, "mcmod.info");
                             if (mcmodContent != null)
                             {
                                 var mcmodArray = JArray.Parse(mcmodContent);
@@ -303,22 +303,22 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
 
         public class ModInfo
         {
-            public string Name { get; set; }
-            public string Description { get; set; }
-            public string Version { get; set; }
-            public string[] Authors { get; set; }
-            public string FilePath { get; set; }
+            public string Name { get; set; } = string.Empty;
+            public string Description { get; set; } = string.Empty;
+            public string Version { get; set; } = string.Empty;
+            public string[] Authors { get; set; } = [];
+            public string FilePath { get; set; } = string.Empty;
             /// <summary>
             /// Mod图标的Base64编码字符串，如果没有图标则为空字符串
             /// </summary>
-            public string Icon { get; set; }
+            public string Icon { get; set; } = string.Empty;
             public int CurseForgeId { get; set; }
-            public string ModrinthId { get; set; }
+            public string ModrinthId { get; set; } = string.Empty;
             public bool Active { get { return Path.GetExtension(FilePath).Equals(".jar", StringComparison.OrdinalIgnoreCase);} }
-            public string Sha1Hash { get; set; }
+            public string Sha1Hash { get; set; } = string.Empty;
             public long CFHash { get; set; }
-            public CurseForgeBase.FingerprintsFilesMeta CurseForgeMeta { get; set; }
-            public ModrinthBase.ProjectVersionInfo ModrinthMeta { get; set; }
+            public CurseForgeBase.FingerprintsFilesMeta? CurseForgeMeta { get; set; }
+            public ModrinthBase.ProjectVersionInfo? ModrinthMeta { get; set; }
         }
     }
 }

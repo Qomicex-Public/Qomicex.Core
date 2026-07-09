@@ -55,8 +55,8 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
 
         public class ScreenshotInfo
         {
-            public string FilePath { get; set; }
-            public string FileName { get; set; }
+            public string FilePath { get; set; } = string.Empty;
+            public string FileName { get; set; } = string.Empty;
             public DateTime CreatedAt { get; set; }
             public long FileSize { get; set; }
         }

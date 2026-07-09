@@ -89,7 +89,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                 //检查安装器
                 string profileName = string.IsNullOrEmpty(installProfileJson["profile"]?.ToString())
                     ? installProfileJson["install"]?["profileName"]?.ToString() ?? string.Empty
-                    : installProfileJson["profile"]?.ToString();
+                    : installProfileJson["profile"]?.ToString()!;
 
                 if (profileName != "forge")
                 {
@@ -277,7 +277,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                 //检查安装器
                 string profileName = string.IsNullOrEmpty(installProfileJson["profile"]?.ToString())
                     ? installProfileJson["install"]?["profileName"]?.ToString() ?? string.Empty
-                    : installProfileJson["profile"]?.ToString();
+                    : installProfileJson["profile"]?.ToString()!;
 
                 if (profileName != "forge")
                 {
@@ -332,7 +332,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             //提取并写入Forge主Jar文件
             var jarMavenPath = MavenToPath(installProfileJson["install"]?["path"]?.ToString()!);
             var filePath = installProfileJson["install"]?["filePath"]?.ToString();
-            var forgeJar = GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, filePath);
+            var forgeJar = GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, filePath!);
             var jarFullPath = Path.Combine(this.gameDir, "libraries", jarMavenPath);
             var jarDir = Path.GetDirectoryName(jarFullPath);
 
@@ -386,7 +386,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                 var installProfileJson = JObject.Parse(installProfileData!);
                 string profileName = string.IsNullOrEmpty(installProfileJson["profile"]?.ToString())
                     ? installProfileJson["install"]?["profileName"]?.ToString() ?? string.Empty
-                    : installProfileJson["profile"]?.ToString();
+                    : installProfileJson["profile"]?.ToString()!;
 
                 Trace.WriteLine($"Forge安装器profileName: {profileName}");
 
