@@ -242,20 +242,8 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             string version = parts[2].Trim();
 
             // 处理可选的classifier和type，兼容 classifier@type 与 classifier:type 两种格式
-            // 最后一部分的 @ 表示扩展名（HMCL同样处理：检查最后一个部分）
             string classifier = string.Empty;
             string type = "jar";
-
-            // 3部分坐标时，version可能带@extension（如 group:artifact:version@zip）
-            if (parts.Length < 4 && version.Contains('@', StringComparison.Ordinal))
-            {
-                var verParts = version.Split('@', 2);
-                version = verParts[0].Trim();
-                type = verParts.Length > 1 && !string.IsNullOrWhiteSpace(verParts[1])
-                    ? verParts[1].Trim()
-                    : "jar";
-            }
-
             if (parts.Length >= 4)
             {
                 var classifierPart = parts[3].Trim();
@@ -316,14 +304,18 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             return string.Empty;
         }
 
-        internal (int exitCode, string output) RunInstallProcess(string arguments, string program)
+        internal int RunInstallProcess(string arguments, string program)
         {
             using var process = new Process();
 
+            // 判断平台
             bool isWindows = OperatingSystem.IsWindows();
+            bool isLinux = OperatingSystem.IsLinux();
+            bool isMacOS = OperatingSystem.IsMacOS();
 
             if (program == null)
             {
+                // 默认执行 shell
                 program = isWindows ? "cmd.exe" : (File.Exists("/bin/bash") ? "/bin/bash" : "/bin/sh");
             }
 
@@ -335,6 +327,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             }
             else
             {
+                // Linux/macOS 用 -c
                 process.StartInfo.Arguments = program == "/bin/bash" ? $"-c \"{arguments}\"" : arguments;
             }
 
@@ -344,11 +337,11 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             process.StartInfo.CreateNoWindow = true;
 
             process.Start();
-            string stdout = process.StandardOutput.ReadToEnd();
-            string stderr = process.StandardError.ReadToEnd();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
             process.WaitForExit();
 
-            return (process.ExitCode, (stdout + "\n" + stderr).Trim());
+            return process.ExitCode;
         }
 
 

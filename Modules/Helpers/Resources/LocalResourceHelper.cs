@@ -45,9 +45,9 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                     {
                         isSuitable = true;
                     }
-                    else if (!action && (os.Equals(SystemInfoHelper.OsName, StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(os)) && (arch.Equals(currentArch, StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(arch)))
+                    else if (!action && !os.Equals(SystemInfoHelper.OsName, StringComparison.OrdinalIgnoreCase) && (arch.Equals(currentArch, StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(arch)))
                     {
-                        isSuitable = false;
+                        isSuitable = true;
                     }
                 }
             }
@@ -77,8 +77,6 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                 var libObj = (JObject)item;
                 if (CheckRules(libObj))
                 {
-                    if (libObj.ContainsKey("optional") && (bool)libObj["optional"]!)
-                        continue;
                     if (libObj.ContainsKey("name"))
                     {
                         var name = libObj["name"]!.ToString();
@@ -94,7 +92,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                                 info.Hash = GetNativesInfo(libObj, 1);
                                 info.Url = GetNativesInfo(libObj, 2);
                                 string[] temp = info.FullName.Split(':');
-                                if (temp.Length >= 3)
+                                if (temp.Length >= 4)
                                 {
                                     info.Name = $"{temp[0]}.{temp[1]}.{temp[3]}";
                                 }
@@ -169,15 +167,18 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                 nativesName = nativesName.Replace("${arch}", "64");
             else
                 nativesName = nativesName.Replace("${arch}", "32");
-            if (obj.ContainsKey("downloads") && obj["downloads"] is JObject downloadsObj && downloadsObj.ContainsKey("classifiers"))
+            if (obj.ContainsKey("downloads"))
             {
-                var classifiersObj = (JObject?)downloadsObj["classifiers"];
-                if (classifiersObj != null && classifiersObj.ContainsKey(nativesName) && classifiersObj[nativesName] is JObject nativeEntry)
+                if (obj.ContainsKey("classifiers"))
                 {
-                    if (type == 1 && nativeEntry.ContainsKey("sha1"))
-                        return nativeEntry["sha1"]!.ToString();
-                    if (type == 2 && nativeEntry.ContainsKey("url"))
-                        return nativeEntry["url"]!.ToString();
+                    var classifiersObj = (JObject?)obj["downloads"]!["classifiers"];
+                    if (classifiersObj != null && classifiersObj.ContainsKey($"natives-{SystemInfoHelper.OsName}"))
+                    {
+                        if (classifiersObj[nativesName]!.Contains("sha1") && type == 1)
+                            return classifiersObj[nativesName]!["sha1"]!.ToString();
+                        if (classifiersObj[nativesName]!.Contains("url") && type == 2)
+                            return classifiersObj[nativesName]!["url"]!.ToString();
+                    }
                 }
             }
             if (type == 0)
@@ -616,8 +617,8 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                     throw new Exception("库文件路径或哈希值不能为空");
                 }
             }
-            var missMainJar = await GetMissMainJarFromJsonAsync(JsonContent, versionId, gameDir);
-            if (missMainJar != null && !string.IsNullOrEmpty(missMainJar.Path))
+            var missMainJar = await GetMissMainJarFromJsonAsync(JsonContent, versionId, gameDir)!;
+            if (!string.IsNullOrEmpty(missMainJar!.Path))
             {
                 missFiles.Add(missMainJar);
             }

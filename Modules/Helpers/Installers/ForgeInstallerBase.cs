@@ -129,9 +129,9 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                             throw new Exception($"下载缺失的库文件失败: {cpJarPath}\n{ex.Message}");
                         }
                     }
-                    cps += $"{cpJarPath}{separator}";
+                    cps += $"{cpJarPath};";
                 }
-                cps = cps.TrimEnd(';', ':');
+                cps = cps.TrimEnd(';');
                 Trace.WriteLine($"构造完成的classpath: {cps}");
             }
 
@@ -166,11 +166,9 @@ namespace Qomicex.Core.Modules.Helpers.Installers
 
             string command = $"-cp \"{cps}{separator}{jarPath}\" {mainClass} {args}";
             Trace.WriteLine($"执行Processor命令: {javaPath} {command}");
-            var (exitCode, procOutput) = RunInstallProcess(command, javaPath);
-            if (exitCode != 0)
+            if (RunInstallProcess(command, javaPath) != 0)
             {
-                Trace.WriteLine($"Processor输出: {procOutput}");
-                throw new Exception($"Processor执行失败 (exit={exitCode})，命令: {javaPath} {command}\n输出: {procOutput}");
+                throw new Exception($"Processor执行失败，命令: {javaPath} {command}");
             }
 
             //校验输出文件

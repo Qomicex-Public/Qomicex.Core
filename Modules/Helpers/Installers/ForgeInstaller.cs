@@ -86,15 +86,11 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             //处理Json
             try
             {
-                //检查安装器 - 新格式(spec)不检查profile字段；旧格式需要校验
-                bool isSpecFormat = installProfileJson.ContainsKey("spec");
-                if (!isSpecFormat)
+                //检查安装器
+                string profileName = installProfileJson["profile"]?.ToString() ?? string.Empty;
+                if (profileName != "forge")
                 {
-                    string profileName = installProfileJson["profile"]?.ToString() ?? string.Empty;
-                    if (profileName != "forge")
-                    {
-                        throw new Exception("安装器版本不正确，请检查安装器文件是否正确");
-                    }
+                    throw new Exception("安装器版本不正确，请检查安装器文件是否正确");
                 }
 
                 var forgeVersion = installProfileJson["version"]?.ToString().Split("-")[2];
@@ -168,83 +164,20 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             installProfileJson["data"]!["BINPATCH"]!["client"] = binPatchPath;
 
             //解压Forge Jar
-            //提取并写入Forge主Jar文件（新格式spec 2中path可能为null，由后续library下载补全）
-            var pathToken = installProfileJson["path"];
-            if (pathToken != null && !string.IsNullOrWhiteSpace(pathToken.ToString()))
-            {
-                var jarMavenPath = MavenToPath(pathToken.ToString());
-                if (!string.IsNullOrWhiteSpace(jarMavenPath))
-                {
-                    var forgeJar = GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, $@"maven/{jarMavenPath}");
-                    if (forgeJar.Length > 0)
-                    {
-                        var jarFullPath = Path.Combine(this.gameDir, "libraries", jarMavenPath);
-                        var jarDir = Path.GetDirectoryName(jarFullPath);
+            //提取并写入Forge主Jar文件
+            var jarMavenPath = MavenToPath(installProfileJson["path"]?.ToString()!);
+            var forgeJar = GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, $@"maven/{jarMavenPath}");
+            var jarFullPath = Path.Combine(this.gameDir, "libraries", jarMavenPath);
+            var jarDir = Path.GetDirectoryName(jarFullPath);
 
-                        if (!Directory.Exists(jarDir))
-                        {
-                            Directory.CreateDirectory(jarDir!);
-                            backDirs.Add(jarDir!);
-                        }
-
-                        backFiles.Add(jarFullPath);
-                        File.WriteAllBytes(jarFullPath, forgeJar);
-                    }
-                    else
-                    {
-                        Trace.WriteLine($"Forge主JAR在installer的maven/{jarMavenPath}不存在，跳过提取");
-                    }
-                }
-            }
-            else
+            if (!Directory.Exists(jarDir))
             {
-                Trace.WriteLine("Forge安装器path字段为空，跳过主JAR提取（新格式常见，库文件将通过下载补全）");
+                Directory.CreateDirectory(jarDir!);
+                backDirs.Add(jarDir!);
             }
 
-            //新格式：从installer的maven/目录提取processor相关JAR
-            foreach (var coord in ExtractMavenCoordinatesFromProcessors(installProfileJson))
-            {
-                var mavenPath = MavenToPath(coord);
-                if (string.IsNullOrWhiteSpace(mavenPath)) continue;
-
-                var destPath = Path.Combine(this.gameDir, "libraries", mavenPath);
-                if (File.Exists(destPath)) continue;
-
-                byte[] bytes;
-                try
-                {
-                    bytes = GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, $@"maven/{mavenPath}");
-                }
-                catch (FileNotFoundException)
-                {
-                    Trace.WriteLine($"坐标 {coord} 不在安装器maven目录中，尝试从网络下载");
-                    var downloadUrl = $"{BaseUrl}/{mavenPath}";
-                    try
-                    {
-                        var destDir2 = Path.GetDirectoryName(destPath);
-                        if (!Directory.Exists(destDir2))
-                            Directory.CreateDirectory(destDir2!);
-                        await DownloadFileAsync(downloadUrl, destPath);
-                        Trace.WriteLine($"数据依赖下载成功: {coord}");
-                    }
-                    catch (Exception e)
-                    {
-                        BackInstall(backFiles, backDirs);
-                        throw new Exception($"下载数据依赖失败: {coord}\n{e.Message}");
-                    }
-                    continue;
-                }
-                if (bytes.Length > 0)
-                {
-                    var destDir = Path.GetDirectoryName(destPath);
-                    if (!Directory.Exists(destDir))
-                    {
-                        Directory.CreateDirectory(destDir!);
-                    }
-                    File.WriteAllBytes(destPath, bytes);
-                    Trace.WriteLine($"从installer提取了processor依赖: {coord}");
-                }
-            }
+            backFiles.Add(jarFullPath);
+            File.WriteAllBytes(jarFullPath, forgeJar);
 
             //下载缺失lib
             var libs = GetMissForgeLibraries(forgeInstallerPath, versionId);
@@ -382,32 +315,20 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             }
 
             //解压Forge Jar
-            //提取并写入Forge主Jar文件（旧格式：path在install.path；通过filePath定位installer ZIP中的文件）
-            var installSection = installProfileJson["install"] as JObject;
+            //提取并写入Forge主Jar文件
             var jarMavenPath = MavenToPath(installProfileJson["path"]?.ToString()!);
-            if (string.IsNullOrWhiteSpace(jarMavenPath))
-                jarMavenPath = MavenToPath(installSection?["path"]?.ToString()!);
-            var filePath = installSection?["filePath"]?.ToString()
-                ?? jarMavenPath.Split('/').LastOrDefault() ?? string.Empty;
+            var forgeJar = GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, $@"maven/{jarMavenPath}");
+            var jarFullPath = Path.Combine(this.gameDir, "libraries", jarMavenPath);
+            var jarDir = Path.GetDirectoryName(jarFullPath);
 
-            if (!string.IsNullOrWhiteSpace(jarMavenPath) && !string.IsNullOrWhiteSpace(filePath))
+            if (!Directory.Exists(jarDir))
             {
-                var forgeJar = GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, filePath);
-                if (forgeJar.Length > 0)
-                {
-                    var jarFullPath = Path.Combine(this.gameDir, "libraries", jarMavenPath);
-                    var jarDir = Path.GetDirectoryName(jarFullPath);
-
-                    if (!Directory.Exists(jarDir))
-                    {
-                        Directory.CreateDirectory(jarDir!);
-                        backDirs.Add(jarDir!);
-                    }
-
-                    backFiles.Add(jarFullPath);
-                    File.WriteAllBytes(jarFullPath, forgeJar);
-                }
+                Directory.CreateDirectory(jarDir!);
+                backDirs.Add(jarDir!);
             }
+
+            backFiles.Add(jarFullPath);
+            File.WriteAllBytes(jarFullPath, forgeJar);
 
             //下载缺失lib
             var libs = GetMissForgeLibraries(forgeInstallerPath, versionId);
@@ -448,38 +369,15 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             try
             {
                 var installProfileJson = JObject.Parse(installProfileData!);
+                string profileName = installProfileJson["profile"]?.ToString() ?? string.Empty;
 
-                // spec 2 必须有 "spec" 字段
-                if (installProfileJson.ContainsKey("spec"))
+                if (profileName != "forge")
                 {
-                    return false;
+                    throw new Exception("安装器版本不正确，请检查安装器文件是否正确");
                 }
 
-                // spec 1 必须有 "install" 和 "versionInfo"（旧格式特征）
-                if (installProfileJson.ContainsKey("install") && installProfileJson.ContainsKey("versionInfo"))
-                {
-                    return true;
-                }
-
-                // 进一步判断：data/client.lzma 只在新版（spec 2）中存在
-                try
-                {
-                    var lzma = GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, "data/client.lzma");
-                    if (lzma.Length > 0)
-                        return false; // 有 client.lzma → spec 2
-                }
-                catch (FileNotFoundException)
-                {
-                    // 无 client.lzma → 旧版
-                }
-
-                // 最终 fallback：检查 install 节点中 path 字段（spec 1 指向 JAR 文件，spec 2 可能缺失）
-                var installPath = installProfileJson["install"]?["path"]?.ToString();
-                if (!string.IsNullOrEmpty(installPath))
-                    return true;
-
-                // 假旧版（最保守策略）
-                return true;
+                bool hasProcessors = installProfileJson.ContainsKey("processors") && installProfileJson["processors"]?.Count() > 0;
+                return !hasProcessors;
             }
             catch (Exception e)
             {
@@ -552,18 +450,47 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             var installProfileData = string.Empty;
             try
             {
-                versionData = Encoding.UTF8.GetString(GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, "version.json"));
                 installProfileData = Encoding.UTF8.GetString(GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, "install_profile.json"));
             }
             catch
             {
                 throw new Exception("读取Forge安装器内容失败，请检查安装器文件是否正确");
             }
-
+            try
+            {
+                versionData = Encoding.UTF8.GetString(GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, "version.json"));
+            }
+            catch
+            {
+                if (IsLegacyForgeInstaller(forgeInstallerPath))
+                {
+                    throw new Exception("读取Forge安装器内容失败，请检查安装器文件是否正确");
+                } 
+            }
 
             //获取缺失 libs
-            var libs = LocalResourceHelper.GetLibraries(installProfileData!);
-            libs.AddRange(LocalResourceHelper.GetLibraries(versionData!));
+            var libs = new List<LocalResourceHelper.LibInfo>();
+            var installProfileJson = JObject.Parse(installProfileData!);
+            var profileLibraries = installProfileJson["libraries"] as JArray;
+
+            foreach (var lib in profileLibraries!)
+            {
+                if (lib.Contains("clientreq"))
+                    if (lib["clientreq"]?.ToString() == "false")
+                        continue;
+
+                var libObj = (JObject)lib;
+                var libInfo = new LocalResourceHelper.LibInfo
+                {
+                    FullName = libObj["name"]?.ToString() ?? string.Empty,
+                };
+                libs.Add(libInfo);
+            }
+
+            //var libs = LocalResourceHelper.GetLibraries(installProfileData!);
+            if (!string.IsNullOrEmpty(versionData))
+                libs.AddRange(LocalResourceHelper.GetLibraries(versionData!));
+
             libs = LocalResourceHelper.CheckLibsVer(libs);
 
             var missFiles = new List<LocalResourceHelper.MissFileData>();
