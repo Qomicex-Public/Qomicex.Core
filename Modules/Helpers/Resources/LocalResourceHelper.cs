@@ -545,10 +545,6 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                         missFiles.Add(missFile);
                     }
                 }
-                else
-                {
-                    throw new Exception("库文件路径或哈希值不能为空");
-                }
             }
             var missMainJar = await GetMissMainJarAsync(version, gameDir);
             if (missMainJar is not null && !string.IsNullOrEmpty(missMainJar.Path))
@@ -607,10 +603,6 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                         missFile.Sha1 = item.Hash;
                         missFiles.Add(missFile);
                     }
-                }
-                else
-                {
-                    throw new Exception("库文件路径或哈希值不能为空");
                 }
             }
             var missMainJar = await GetMissMainJarFromJsonAsync(JsonContent, versionId, gameDir);
