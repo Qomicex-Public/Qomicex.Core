@@ -509,6 +509,23 @@ namespace Qomicex.Core.Modules.Helpers.Resources
             foreach (var item in lib)
             {
                 string path = item.Path;
+                if (!string.IsNullOrEmpty(path))
+                {
+                    if (!File.Exists(Path.Combine(gameDir, "libraries", path)))
+                    {
+                        MissFileData missFile = new MissFileData();
+                        missFile.Name = item.Name;
+                        missFile.Path = Path.Combine(gameDir, "libraries", path);
+                        if (!string.IsNullOrEmpty(item.Url))
+                            missFile.Url = item.Url;
+                        else
+                            missFile.Url = $"{_downloadSource.librariesSource}{path}";
+                        missFile.Sha1 = item.Hash;
+                        missFiles.Add(missFile);
+                        continue;
+                    }
+                }
+
                 if (!string.IsNullOrEmpty(item.Hash))
                 {
                     if (GeneralHelper.VerifyFileSha1(Path.Combine(gameDir, "libraries", path), item.Hash))//$"{gameDir}/libraries/{path}"
@@ -522,25 +539,6 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                         missFile.Path = Path.Combine(gameDir, "libraries", path); //$"{gameDir}/libraries/{path}"
                         if (!string.IsNullOrEmpty(item.Url))
                             missFile.Url = item.Url.Replace("https://libraries.minecraft.net/", _downloadSource.librariesSource);
-                        else
-                            missFile.Url = $"{_downloadSource.librariesSource}{path}";
-                        missFile.Sha1 = item.Hash;
-                        missFiles.Add(missFile);
-                    }
-                }
-                else if (!string.IsNullOrEmpty(path))
-                {
-                    if (File.Exists(Path.Combine(gameDir, "libraries", path)))
-                    {
-                        continue; //如果文件存在则跳过
-                    }
-                    else
-                    {
-                        MissFileData missFile = new MissFileData();
-                        missFile.Name = item.Name;
-                        missFile.Path = Path.Combine(gameDir, "libraries", path);
-                        if (!string.IsNullOrEmpty(item.Url))
-                            missFile.Url = item.Url;
                         else
                             missFile.Url = $"{_downloadSource.librariesSource}{path}";
                         missFile.Sha1 = item.Hash;
@@ -574,6 +572,23 @@ namespace Qomicex.Core.Modules.Helpers.Resources
             foreach (var item in lib)
             {
                 string path = item.Path;
+                if (!string.IsNullOrEmpty(path))
+                {
+                    if (!File.Exists(Path.Combine(gameDir, "libraries", path)))
+                    {
+                        MissFileData missFile = new MissFileData();
+                        missFile.Name = item.Name;
+                        missFile.Path = Path.Combine(gameDir, "libraries", path);
+                        if (!string.IsNullOrEmpty(item.Url))
+                            missFile.Url = item.Url;
+                        else
+                            missFile.Url = $"{_downloadSource.librariesSource}{path}";
+                        missFile.Sha1 = item.Hash;
+                        missFiles.Add(missFile);
+                        continue;
+                    }
+                }
+
                 if (!string.IsNullOrEmpty(item.Hash))
                 {
                     if (GeneralHelper.VerifyFileSha1(Path.Combine(gameDir, "libraries", path), item.Hash))//$"{gameDir}/libraries/{path}"
@@ -587,25 +602,6 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                         missFile.Path = Path.Combine(gameDir, "libraries", path); //$"{gameDir}/libraries/{path}"
                         if (!string.IsNullOrEmpty(item.Url))
                             missFile.Url = item.Url.Replace("https://libraries.minecraft.net/", _downloadSource.librariesSource);
-                        else
-                            missFile.Url = $"{_downloadSource.librariesSource}{path}";
-                        missFile.Sha1 = item.Hash;
-                        missFiles.Add(missFile);
-                    }
-                }
-                else if (!string.IsNullOrEmpty(path))
-                {
-                    if (File.Exists(Path.Combine(gameDir, "libraries", path)))
-                    {
-                        continue; //如果文件存在则跳过
-                    }
-                    else
-                    {
-                        MissFileData missFile = new MissFileData();
-                        missFile.Name = item.Name;
-                        missFile.Path = Path.Combine(gameDir, "libraries", path);
-                        if (!string.IsNullOrEmpty(item.Url))
-                            missFile.Url = item.Url;
                         else
                             missFile.Url = $"{_downloadSource.librariesSource}{path}";
                         missFile.Sha1 = item.Hash;
@@ -672,7 +668,22 @@ namespace Qomicex.Core.Modules.Helpers.Resources
             string sha1 = data["downloads"]?["client"]?["sha1"]?.ToString() ?? string.Empty;
             if (!string.IsNullOrEmpty(sha1))
             {
-                if (!GeneralHelper.VerifyFileSha1(Path.Combine(gameDir, "versions", version, $"{version}.jar"), sha1)) //$"{gameDir}/versions/{version}/{version}.jar"
+                if (!File.Exists(Path.Combine(gameDir, "versions", version, $"{version}.jar")))
+                {
+                    missMainJar.Name = $"{version}.jar";
+                    missMainJar.Path = Path.Combine(gameDir, "versions", version, $"{version}.jar");
+                    missMainJar.Url = data["downloads"]?["client"]?["url"]?.ToString() ?? string.Empty;
+                    if (DownloadSourceId == (int)DownloadSources.BMCLAPI)
+                    {
+                        missMainJar.Url = missMainJar.Url.Replace("https://piston-meta.mojang.com/", _downloadSource.mainJarSource)
+                            .Replace("https://launchermeta.mojang.com/", _downloadSource.mainJarSource)
+                            .Replace("https://launcher.mojang.com/", _downloadSource.mainJarSource)
+                            .Replace("https://piston-data.mojang.com/", _downloadSource.mainJarSource);
+                    }
+                    missMainJar.Sha1 = sha1;
+                }
+
+                if (File.Exists(Path.Combine(gameDir, "versions", version, $"{version}.jar")) && !GeneralHelper.VerifyFileSha1(Path.Combine(gameDir, "versions", version, $"{version}.jar"), sha1)) //$"{gameDir}/versions/{version}/{version}.jar"
                 {
                     missMainJar.Name = $"{version}.jar";
                     missMainJar.Path = Path.Combine(gameDir, "versions", version, $"{version}.jar");
@@ -722,19 +733,34 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                 string inheritsSha1 = inheritsData["downloads"]?["client"]?["sha1"]?.ToString() ?? string.Empty;
                 if (!string.IsNullOrEmpty(inheritsSha1))
                 {
-                    if (!GeneralHelper.VerifyFileSha1(Path.Combine(gameDir, "versions", inheritsFrom, $"{inheritsFrom}.jar"), inheritsSha1)) //$"{gameDir}/versions/{inheritsFrom}/{inheritsFrom}.jar"
+                    if (!File.Exists(Path.Combine(gameDir, "versions", version, $"{version}.jar")))
                     {
-                        missMainJar.Name = $"{inheritsFrom}.jar";
-                        missMainJar.Path = Path.Combine(gameDir, "versions", inheritsFrom, $"{inheritsFrom}.jar");
-                        missMainJar.Url = inheritsData["downloads"]?["client"]?["url"]?.ToString() ?? string.Empty;
+                        missMainJar.Name = $"{version}.jar";
+                        missMainJar.Path = Path.Combine(gameDir, "versions", version, $"{version}.jar");
+                        missMainJar.Url = data["downloads"]?["client"]?["url"]?.ToString() ?? string.Empty;
                         if (DownloadSourceId == (int)DownloadSources.BMCLAPI)
                         {
                             missMainJar.Url = missMainJar.Url.Replace("https://piston-meta.mojang.com/", _downloadSource.mainJarSource)
-                                                        .Replace("https://launchermeta.mojang.com/", _downloadSource.mainJarSource)
-                                                        .Replace("https://launcher.mojang.com/", _downloadSource.mainJarSource)
-                                                        .Replace("https://piston-data.mojang.com/", _downloadSource.mainJarSource);
+                                .Replace("https://launchermeta.mojang.com/", _downloadSource.mainJarSource)
+                                .Replace("https://launcher.mojang.com/", _downloadSource.mainJarSource)
+                                .Replace("https://piston-data.mojang.com/", _downloadSource.mainJarSource);
                         }
-                        missMainJar.Sha1 = inheritsSha1;
+                        missMainJar.Sha1 = sha1;
+                    }
+
+                    if (File.Exists(Path.Combine(gameDir, "versions", version, $"{version}.jar")) && !GeneralHelper.VerifyFileSha1(Path.Combine(gameDir, "versions", version, $"{version}.jar"), sha1)) //$"{gameDir}/versions/{version}/{version}.jar"
+                    {
+                        missMainJar.Name = $"{version}.jar";
+                        missMainJar.Path = Path.Combine(gameDir, "versions", version, $"{version}.jar");
+                        missMainJar.Url = data["downloads"]?["client"]?["url"]?.ToString() ?? string.Empty;
+                        if (DownloadSourceId == (int)DownloadSources.BMCLAPI)
+                        {
+                            missMainJar.Url = missMainJar.Url.Replace("https://piston-meta.mojang.com/", _downloadSource.mainJarSource)
+                                .Replace("https://launchermeta.mojang.com/", _downloadSource.mainJarSource)
+                                .Replace("https://launcher.mojang.com/", _downloadSource.mainJarSource)
+                                .Replace("https://piston-data.mojang.com/", _downloadSource.mainJarSource);
+                        }
+                        missMainJar.Sha1 = sha1;
                     }
                 }
             }
@@ -806,7 +832,20 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                             string assetHash = assetDetails["hash"]!.ToString();
                             string assetUrl = $"{_downloadSource.assetsSource}{assetHash.Substring(0, 2)}/{assetHash}";
                             string assetPath = Path.Combine(gameDir, "assets", "objects", assetHash.Substring(0, 2), assetHash);
-                            if (!File.Exists(assetPath) || !GeneralHelper.VerifyFileSha1(assetPath, assetHash))
+                            if (!File.Exists(assetPath))
+                            {
+                                MissFileData missFile = new MissFileData
+                                {
+                                    Name = assetHash,
+                                    Path = assetPath,
+                                    Url = assetUrl.Replace("http://", "https://"),
+                                    Sha1 = assetHash
+                                };
+                                missFiles.Add(missFile);
+                                continue;
+                            }
+
+                            if (!GeneralHelper.VerifyFileSha1(assetPath, assetHash))
                             {
                                 MissFileData missFile = new MissFileData
                                 {
@@ -887,7 +926,20 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                                 string assetHash = assetDetails["hash"]!.ToString();
                                 string assetUrl = $"{_downloadSource.assetsSource}{assetHash.Substring(0, 2)}/{assetHash}";
                                 string assetPath = Path.Combine(gameDir, "assets", "objects", assetHash.Substring(0, 2), assetHash);
-                                if (!File.Exists(assetPath) || !GeneralHelper.VerifyFileSha1(assetPath, assetHash))
+                                if (!File.Exists(assetPath))
+                                {
+                                    MissFileData missFile = new MissFileData
+                                    {
+                                        Name = assetHash,
+                                        Path = assetPath,
+                                        Url = assetUrl.Replace("http://", "https://"),
+                                        Sha1 = assetHash
+                                    };
+                                    missFiles.Add(missFile);
+                                    continue;
+                                }
+
+                                if (!GeneralHelper.VerifyFileSha1(assetPath, assetHash))
                                 {
                                     MissFileData missFile = new MissFileData
                                     {
@@ -971,7 +1023,20 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                             string assetHash = assetDetails["hash"]!.ToString();
                             string assetUrl = $"{_downloadSource.assetsSource}{assetHash.Substring(0, 2)}/{assetHash}";
                             string assetPath = Path.Combine(gameDir, "assets", "objects", assetHash.Substring(0, 2), assetHash);
-                            if (!File.Exists(assetPath) || !GeneralHelper.VerifyFileSha1(assetPath, assetHash))
+                            if (!File.Exists(assetPath))
+                            {
+                                MissFileData missFile = new MissFileData
+                                {
+                                    Name = assetHash,
+                                    Path = assetPath,
+                                    Url = assetUrl.Replace("http://", "https://"),
+                                    Sha1 = assetHash
+                                };
+                                missFiles.Add(missFile);
+                                continue;
+                            }
+
+                            if (!GeneralHelper.VerifyFileSha1(assetPath, assetHash))
                             {
                                 MissFileData missFile = new MissFileData
                                 {

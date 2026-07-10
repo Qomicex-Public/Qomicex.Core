@@ -170,13 +170,30 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                         {
                             urlDomain = lib["url"]?.ToString()!;
                         }
-                        missFiles.Add(new LocalResourceHelper.MissFileData
+                        if (File.Exists(Path.Combine(gameDir, "libraries", MavenToPath(lib["name"]?.ToString()!))))
+                        {
+                            if(!string.IsNullOrEmpty(lib["sha1"]?.ToString()!))
+                            {
+                                if (GeneralHelper.VerifyFileSha1(Path.Combine(gameDir, "libraries", MavenToPath(lib["name"]?.ToString()!)), lib["sha1"]?.ToString()!))
+                                {
+                                    continue;
+                                }
+                            }
+                        }
+
+                        var file = new LocalResourceHelper.MissFileData
                         {
                             Name = lib["name"]?.ToString()!,
-                            Path = $"{gameDir}/libraries/{MavenToPath(lib["name"]?.ToString()!)}",
-                            Url = $"{urlDomain}{MavenToPath(lib["name"]?.ToString()!)}",
+                            Path = Path.Combine(gameDir, "libraries", MavenToPath(lib["name"]?.ToString()!)),
+                            Url = Path.Combine(urlDomain, MavenToPath(lib["name"]?.ToString()!)),
                             Sha1 = lib["sha1"]?.ToString()!
-                        });
+                        };
+
+                        if (_downloadSource != "https://meta.fabricmc.net/")
+                            file.Url = file.Url.Replace("https://meta.fabricmc.net/", "https://bmclapi2.bangbang93.com/fabric-meta")
+                                .Replace("https://maven.fabricmc.net/", "https://bmclapi2.bangbang93.com/maven");
+
+                        missFiles.Add(file);
                     }
                 }
                 return missFiles;

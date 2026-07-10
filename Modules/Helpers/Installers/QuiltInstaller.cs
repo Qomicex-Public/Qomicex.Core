@@ -119,6 +119,16 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                         {
                             urlDomain = lib["url"]?.ToString()!;
                         }
+                        if (File.Exists(Path.Combine(gameDir, "libraries", MavenToPath(lib["name"]?.ToString()!))))
+                        {
+                            if (!string.IsNullOrEmpty(lib["sha1"]?.ToString()!))
+                            {
+                                if (GeneralHelper.VerifyFileSha1(Path.Combine(gameDir, "libraries", MavenToPath(lib["name"]?.ToString()!)), lib["sha1"]?.ToString()!))
+                                {
+                                    continue;
+                                }
+                            }
+                        }
                         missFiles.Add(new LocalResourceHelper.MissFileData
                         {
                             Name = lib["name"]?.ToString()!,

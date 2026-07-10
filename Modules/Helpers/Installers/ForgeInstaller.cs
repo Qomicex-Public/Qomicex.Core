@@ -506,6 +506,18 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                 {
                     FullName = libObj["name"]?.ToString() ?? string.Empty,
                 };
+
+                if (File.Exists(libInfo.Path))
+                {
+                    if(!string.IsNullOrEmpty(libInfo.Hash))
+                    {
+                        if (GeneralHelper.VerifyFileSha1(libInfo.Path, libInfo.Hash))
+                        {
+                            continue;
+                        }
+                    }
+                }
+
                 libs.Add(libInfo);
             }
 
