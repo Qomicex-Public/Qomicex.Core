@@ -241,9 +241,20 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             string artifact = parts[1].Trim();
             string version = parts[2].Trim();
 
-            // 处理可选的classifier和type，兼容 classifier@type 与 classifier:type 两种格式
             string classifier = string.Empty;
             string type = "jar";
+
+            // 处理版本号尾部的 @扩展名（如 1.16.5-20210115.111550@zip）
+            if (version.Contains('@', StringComparison.Ordinal))
+            {
+                var verParts = version.Split('@', 2);
+                version = verParts[0].Trim();
+                type = verParts.Length > 1 && !string.IsNullOrWhiteSpace(verParts[1])
+                    ? verParts[1].Trim()
+                    : "jar";
+            }
+
+            // 处理可选的classifier和type，兼容 classifier@type 与 classifier:type 两种格式
             if (parts.Length >= 4)
             {
                 var classifierPart = parts[3].Trim();
