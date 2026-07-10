@@ -112,8 +112,25 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                     shaderInfo.ModrinthMeta = mrMeta;
                     if (!string.IsNullOrEmpty(mrMeta.Name))
                         shaderInfo.Name = mrMeta.Name;
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(cfMeta?.ModId))
+                        {
+                            var cf = new CurseForge.Shaders(_apiKey);
+                            shaderInfo.Name = cf.GetInfoAsync(cfMeta.ModId).Result.Name; 
+                        }
+                    }    
                     if (!string.IsNullOrEmpty(mrMeta.VersionNumber))
                         shaderInfo.Version = mrMeta.VersionNumber;
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(cfMeta?.ModId))
+                        {
+                            var cf = new CurseForge.Shaders(_apiKey);
+                            var file = cf.GetInfoAsync(cfMeta.ModId).Result.Files.FirstOrDefault(d => d.FileId == cfMeta.FileId);
+                            shaderInfo.Version = file?.FileName ?? string.Empty;
+                        }
+                    }
                 }
             }
 

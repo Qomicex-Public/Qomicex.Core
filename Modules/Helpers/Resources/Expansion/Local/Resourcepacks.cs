@@ -10,6 +10,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using static Qomicex.Core.Modules.Helpers.Resources.Expansion.Local.Shaders;
 
 namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
 {
@@ -238,8 +239,25 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                     packInfo.ModrinthMeta = mrMeta;
                     if (!string.IsNullOrEmpty(mrMeta.Name))
                         packInfo.Name = mrMeta.Name;
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(cfMeta?.ModId))
+                        {
+                            var cf = new CurseForge.ResourcePacks(_apiKey);
+                            packInfo.Name = cf.GetInfoAsync(cfMeta.ModId).Result.Name;
+                        }
+                    }
                     if (!string.IsNullOrEmpty(mrMeta.VersionNumber))
                         packInfo.Version = mrMeta.VersionNumber;
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(cfMeta?.ModId))
+                        {
+                            var cf = new CurseForge.ResourcePacks(_apiKey);
+                            var file = cf.GetInfoAsync(cfMeta.ModId).Result.Files.FirstOrDefault(d => d.FileId == cfMeta.FileId);
+                            packInfo.Version = file?.FileName ?? string.Empty;
+                        }
+                    }
                 }
             }
 
