@@ -724,26 +724,27 @@ namespace Qomicex.Core.Modules.Helpers
             return drives;
         }
 
+        public static int GetRequiredJavaMajor(string minecraftVersion, string gameDir)
+        {
+            try
+            {
+                var requiredVersion = GeneralHelper.GetMinecraftRequireJavaVersion(minecraftVersion, gameDir);
+                if (int.TryParse(requiredVersion, out int required))
+                    return required;
+            }
+            catch
+            {
+            }
+
+            return 8;
+        }
+
         public static bool CheckJavaCompatibility(JavaInfoExtended java, string minecraftVersion, string gameDir)
         {
             if (java.State != JavaState.Valid)
                 return false;
 
-            try
-            {
-                var requiredVersion = GeneralHelper.GetMinecraftRequireJavaVersion(minecraftVersion, gameDir);
-                if (requiredVersion == "Unknown")
-                    return true;
-
-                if (int.TryParse(requiredVersion, out int required) && java.VersionID >= required)
-                    return true;
-
-                return false;
-            }
-            catch
-            {
-                return true;
-            }
+            return java.VersionID >= GetRequiredJavaMajor(minecraftVersion, gameDir);
         }
 
         public static List<JavaInfoExtended> GetRecommendedJava(
@@ -751,10 +752,12 @@ namespace Qomicex.Core.Modules.Helpers
             string minecraftVersion,
             string gameDir)
         {
+            int required = GetRequiredJavaMajor(minecraftVersion, gameDir);
+
             return javaList
                 .Where(j => j.State == JavaState.Valid)
-                .OrderByDescending(j => CheckJavaCompatibility(j, minecraftVersion, gameDir))
-                .ThenBy(j => j.VersionID)
+                .OrderByDescending(j => j.VersionID >= required)
+                .ThenBy(j => j.VersionID >= required ? j.VersionID : -j.VersionID)
                 .ToList();
         }
         #endregion
