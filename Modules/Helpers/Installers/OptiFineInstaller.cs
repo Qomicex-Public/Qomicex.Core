@@ -89,36 +89,41 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             }
             Trace.WriteLine($"安装包下载成功: {installerFile.FullName}");
 
-            // 3. 生成版本ID和安装目录
-            string optiVersionId = versionId;
-            string versionDir = Path.Combine(_gameDir, "versions", optiVersionId);
-            Trace.WriteLine($"生成版本信息 - ID: {optiVersionId}, 目录: {versionDir}");
-
-            if (!Directory.Exists(versionDir))
+            try
             {
-                Directory.CreateDirectory(versionDir);
-            }
+                // 3. 生成版本ID和安装目录
+                string optiVersionId = versionId;
+                string versionDir = Path.Combine(_gameDir, "versions", optiVersionId);
+                Trace.WriteLine($"生成版本信息 - ID: {optiVersionId}, 目录: {versionDir}");
 
-            // 4. 创建版本JSON文件
-            bool jsonCreated = await CreateVersionJsonAsync(baseVersion, version, optiVersionId, versionDir, inheritsFromJson);
-            if (!jsonCreated)
+                if (!Directory.Exists(versionDir))
+                {
+                    Directory.CreateDirectory(versionDir);
+                }
+
+                // 4. 创建版本JSON文件
+                bool jsonCreated = await CreateVersionJsonAsync(baseVersion, version, optiVersionId, versionDir, inheritsFromJson);
+                if (!jsonCreated)
+                {
+                    throw new Exception("版本配置文件创建失败");
+                }
+                Trace.WriteLine("版本JSON创建成功");
+
+                // 5. 执行OptiFine安装程序
+                bool installSuccess = await RunInstallerAsync(installerFile.FullName, javaPath, baseVersion, versionDir, optiVersionId);
+                if (!installSuccess)
+                {
+                    throw new Exception("OptiFine安装程序执行失败");
+                }
+                Trace.WriteLine("OptiFine安装程序执行成功");
+
+                Trace.WriteLine($"OptiFine安装完成 - 版本ID: {optiVersionId}");
+            }
+            finally
             {
-                throw new Exception("版本配置文件创建失败");
+                // 6. 清理临时文件（无论成功或失败）
+                CleanupTempFiles(installerFile.FullName);
             }
-            Trace.WriteLine("版本JSON创建成功");
-
-            // 5. 执行OptiFine安装程序
-            bool installSuccess = await RunInstallerAsync(installerFile.FullName, javaPath, baseVersion, versionDir, optiVersionId);
-            if (!installSuccess)
-            {
-                throw new Exception("OptiFine安装程序执行失败");
-            }
-            Trace.WriteLine("OptiFine安装程序执行成功");
-
-            // 6. 清理临时文件
-            CleanupTempFiles(installerFile.FullName);
-
-            Trace.WriteLine($"OptiFine安装完成 - 版本ID: {optiVersionId}");
         }
 
         /// <summary>
@@ -339,6 +344,14 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             {
                 Trace.WriteLine($"清理临时文件失败: {ex.Message}");
             }
+
+            try
+            {
+                var tempDir = Path.Combine(_gameDir, "temp");
+                if (Directory.Exists(tempDir) && !Directory.EnumerateFileSystemEntries(tempDir).Any())
+                    Directory.Delete(tempDir);
+            }
+            catch { }
         }
 
         private Version? GetBaseMcVersion(string gameDir, string mcVersion)

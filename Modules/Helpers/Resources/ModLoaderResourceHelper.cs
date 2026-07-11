@@ -445,8 +445,42 @@ namespace Qomicex.Core.Modules.Helpers.Resources
 
         private string GetCacheFilePath(string minecraftVersion)
         {
-            var cacheDir = Path.Combine(Path.GetTempPath(), "ForgeVersionCache");
-            return Path.Combine(cacheDir, $"{minecraftVersion}_forge.html");
+            return Path.Combine(ForgeVersionCacheDir, $"{minecraftVersion}_forge.html");
+        }
+
+        /// <summary>
+        /// Forge 版本列表 HTML 缓存目录
+        /// </summary>
+        public static string ForgeVersionCacheDir => Path.Combine(Path.GetTempPath(), "ForgeVersionCache");
+
+        /// <summary>
+        /// 手动清理 Forge 版本列表 HTML 缓存，返回删除的文件数
+        /// </summary>
+        public static int ClearForgeVersionCache()
+        {
+            var cacheDir = ForgeVersionCacheDir;
+            if (!Directory.Exists(cacheDir))
+                return 0;
+
+            int deleted = 0;
+            foreach (var file in Directory.EnumerateFiles(cacheDir))
+            {
+                try
+                {
+                    File.Delete(file);
+                    deleted++;
+                }
+                catch { }
+            }
+
+            try
+            {
+                if (!Directory.EnumerateFileSystemEntries(cacheDir).Any())
+                    Directory.Delete(cacheDir);
+            }
+            catch { }
+
+            return deleted;
         }
 
 

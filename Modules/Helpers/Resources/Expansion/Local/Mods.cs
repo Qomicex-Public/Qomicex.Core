@@ -126,7 +126,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                     }
                     else
                     {
-                        string? tomlContent = ReadZipEntry(archive, "META-INF/mods.toml");
+                        string? tomlContent = ReadZipEntry(archive, "META-INF/mods.toml") ?? ReadZipEntry(archive, "META-INF/neoforge.mods.toml");
                         if (tomlContent != null)
                         {
                             var model = Toml.ToModel(tomlContent);
