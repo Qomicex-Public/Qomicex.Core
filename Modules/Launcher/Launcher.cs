@@ -513,6 +513,11 @@ namespace Qomicex.Core.Modules.Launcher
                 string javaLibDir = ParseJavaLibraryPath(json, nativesDir);
                 if (!string.IsNullOrEmpty(javaLibDir) && javaLibDir != nativesDir)
                 {
+                    // 清空后重新解压，避免上次残留（如错误架构）的库因“不覆盖”逻辑而无法被正确库替换
+                    if (Directory.Exists(javaLibDir))
+                    {
+                        try { Directory.Delete(javaLibDir, true); } catch { }
+                    }
                     Directory.CreateDirectory(javaLibDir);
                     foreach (var native in allNatives)
                     {
@@ -594,15 +599,19 @@ namespace Qomicex.Core.Modules.Launcher
             if (!Directory.Exists(dir))
                 return;
 
-            // 递归遍历所有子目录
+            // 递归遍历所有子目录（跳过非当前主机架构的目录，避免错误架构的库覆盖正确架构）
             foreach (string subDir in Directory.GetDirectories(dir))
             {
+                if (IsForeignArchDir(Path.GetFileName(subDir)))
+                    continue;
                 FlattenNatives(subDir, keepExt);
             }
 
             // 将当前目录子目录中的原生库文件移动到当前目录
             foreach (string subDir in Directory.GetDirectories(dir))
             {
+                if (IsForeignArchDir(Path.GetFileName(subDir)))
+                    continue;
                 foreach (string filePath in Directory.GetFiles(subDir))
                 {
                     string ext = Path.GetExtension(filePath);
@@ -621,6 +630,35 @@ namespace Qomicex.Core.Modules.Launcher
                     try { Directory.Delete(subDir); } catch { }
                 }
             }
+        }
+
+        /// <summary>
+        /// 判断目录名是否为“非当前主机架构”的架构目录。
+        /// 新版 LWJGL natives jar 内按架构分目录打包（如 windows/x64、windows/arm64、windows/x86），
+        /// 需要跳过非本机架构目录，否则扁平化时会把错误架构的库放入 java.library.path 导致无法加载。
+        /// </summary>
+        private static bool IsForeignArchDir(string name)
+        {
+            // 当前主机架构的所有别名
+            HashSet<string> hostAliases = SystemInfoHelper.OsArch switch
+            {
+                "x64" => new(StringComparer.OrdinalIgnoreCase) { "x64", "x86_64", "x86-64", "amd64" },
+                "arm64" => new(StringComparer.OrdinalIgnoreCase) { "arm64", "aarch64" },
+                "x86" => new(StringComparer.OrdinalIgnoreCase) { "x86", "i386", "i686" },
+                _ => new(StringComparer.OrdinalIgnoreCase)
+            };
+
+            // 所有已知架构目录名
+            HashSet<string> knownArch = new(StringComparer.OrdinalIgnoreCase)
+            {
+                "x64", "x86_64", "x86-64", "amd64",
+                "arm64", "aarch64",
+                "x86", "i386", "i686",
+                "arm", "arm32"
+            };
+
+            // 是已知架构目录，但不属于当前主机架构 → 视为异构目录，需跳过
+            return knownArch.Contains(name) && !hostAliases.Contains(name);
         }
     }
 }
