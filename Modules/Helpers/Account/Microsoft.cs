@@ -82,50 +82,49 @@ namespace Qomicex.Core.Modules.Helpers.Account
             var response = await _http.PostAsync("https://login.microsoftonline.com/consumers/oauth2/v2.0/token", content);
             string result = await response.Content.ReadAsStringAsync();
 
-            if (response.IsSuccessStatusCode)
+            // 设备码轮询：等待/拒绝/过期时令牌端点返回 HTTP 400（body 含 error），
+            // 因此无论 HTTP 状态码都需解析 body 再按 error 分流。
+            // status: pending（继续轮询）/ success（成功）/ failed（终止，前端应停止并提示）
+            if (string.IsNullOrEmpty(result))
             {
-                Trace.WriteLine("授权请求响应成功，开始解析结果...");
-                if (!string.IsNullOrEmpty(result))
-                {
-                    var data = JObject.Parse(result);
-                    if (data != null)
-                    {
-                        string err = data["error"]?.ToString() ?? string.Empty;
-                        if (string.IsNullOrEmpty(err))
-                        {
-                            Trace.WriteLine("成功获取用户授权，获取到 access_token 和 refresh_token");
-                            return new Dictionary<string, string>
-                    {
-                        { "access_token", data["access_token"]?.ToString() ?? string.Empty },
-                        { "refresh_token", data["refresh_token"]?.ToString() ?? string.Empty }
-                    };
-                        }
-                        else
-                        {
-                            Trace.WriteLine($"授权请求返回错误: {err}");
-                            return new Dictionary<string, string>
-                    {
-                        { "error", err }
-                    };
-                        }
-                    }
-                    else
-                    {
-                        Trace.WriteLine("无法解析授权响应数据（JObject 为空）");
-                        return new Dictionary<string, string>();
-                    }
-                }
-                else
-                {
-                    Trace.WriteLine("授权响应结果为空字符串");
-                    return new Dictionary<string, string>();
-                }
+                Trace.WriteLine($"授权响应为空，HTTP 状态: {response.StatusCode}");
+                return new Dictionary<string, string> { { "status", "pending" } };
             }
-            else
+
+            JObject? data = null;
+            try { data = JObject.Parse(result); } catch { /* 非 JSON 响应 */ }
+            if (data == null)
             {
-                Trace.WriteLine($"授权请求HTTP失败: {response.StatusCode}，响应内容: {result}");
-                return new Dictionary<string, string>();
+                Trace.WriteLine($"无法解析授权响应数据，HTTP 状态: {response.StatusCode}");
+                return new Dictionary<string, string> { { "status", "pending" } };
             }
+
+            string err = data["error"]?.ToString() ?? string.Empty;
+            if (string.IsNullOrEmpty(err))
+            {
+                Trace.WriteLine("成功获取用户授权，获取到 access_token 和 refresh_token");
+                return new Dictionary<string, string>
+                {
+                    { "status", "success" },
+                    { "access_token", data["access_token"]?.ToString() ?? string.Empty },
+                    { "refresh_token", data["refresh_token"]?.ToString() ?? string.Empty }
+                };
+            }
+
+            // 仍在等待授权，继续轮询
+            if (err == "authorization_pending" || err == "slow_down")
+            {
+                Trace.WriteLine(err == "slow_down" ? "请求过于频繁，放慢轮询..." : "授权请求仍在等待中...");
+                return new Dictionary<string, string> { { "status", "pending" } };
+            }
+
+            // 终止性失败：用户拒绝 / 验证码过期 / 无效授权 / 未知错误
+            Trace.WriteLine($"授权终止，错误: {err}");
+            return new Dictionary<string, string>
+            {
+                { "status", "failed" },
+                { "error", err }
+            };
         }
 
         public async Task<DataModules.DataDetails.Account> GetUserInfo(string accessToken, string refresh_token)
