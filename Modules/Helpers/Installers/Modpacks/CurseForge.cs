@@ -1,8 +1,9 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO.Compression;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Qomicex.Core.Modules.Helpers.Installers.Modpacks
 {
@@ -26,7 +27,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers.Modpacks
 
             var jsonData = Encoding.UTF8.GetString(GeneralHelper.ReadSpecifyFileFromZip(_modpackFilePath, "manifest.json"));
 
-            var json = JObject.Parse(jsonData);
+            var json = JsonNode.Parse(jsonData)!.AsObject();
 
             if (json["manifestType"]?.ToString() != "minecraftModpack")
             {
@@ -70,7 +71,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers.Modpacks
             var info = new CurseForgeModpackInfo();
             var jsonData = Encoding.UTF8.GetString(GeneralHelper.ReadSpecifyFileFromZip(_modpackFilePath, "manifest.json"));
 
-            var json = JObject.Parse(jsonData);
+            var json = JsonNode.Parse(jsonData)!.AsObject();
 
             if (json["manifestType"]?.ToString() != "minecraftModpack")
             {
@@ -81,13 +82,13 @@ namespace Qomicex.Core.Modules.Helpers.Installers.Modpacks
             info.Version = json["version"]?.ToString() ?? string.Empty;
 
             info.GameVersion = json["minecraft"]?["version"]?.ToString() ?? string.Empty;
-            var loaders = json["minecraft"]?["modLoaders"] as JArray ?? [];
+            var loaders = json["minecraft"]?["modLoaders"] as JsonArray ?? [];
 
             var loaderType = string.Empty;
 
             foreach (var loader in loaders)
             {
-                if (loader["primary"]?.ToObject<bool>() == true)
+                if (loader["primary"]?.GetValue<bool>() == true)
                 {
                     loaderType = loader["id"]?.ToString()?.Split('-')?[0] ?? string.Empty;
                     info.ModLoaderVersion = loader["id"]?.ToString()?.Split('-')?[1] ?? string.Empty;
@@ -103,16 +104,16 @@ namespace Qomicex.Core.Modules.Helpers.Installers.Modpacks
                 _ => ModLoaderType.Unknown
             };
 
-            var filesArray = json["files"] as JArray ?? [];
+            var filesArray = json["files"] as JsonArray ?? [];
             foreach (var file in filesArray)
             {
-                if (file["required"]?.ToObject<bool>() != true)
+                if (file["required"]?.GetValue<bool>() != true)
                     continue;
 
                 var fileInfo = new FileInfo
                 {
-                    ProjectId = file["projectID"]?.ToObject<int>() ?? 0,
-                    FileId = file["fileID"]?.ToObject<int>() ?? 0,
+                    ProjectId = file["projectID"]?.GetValue<int>() ?? 0,
+                    FileId = file["fileID"]?.GetValue<int>() ?? 0,
                 };
                 info.Files.Add(fileInfo);
             }

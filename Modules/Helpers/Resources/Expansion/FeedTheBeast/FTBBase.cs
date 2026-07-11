@@ -1,5 +1,6 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,6 +9,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
+using Qomicex.Core.Common;
 
 namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.FeedTheBeast
 {
@@ -55,7 +57,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.FeedTheBeast
                     try
                     {
                         var json = await File.ReadAllTextAsync(_cacheFile);
-                        var cached = JsonConvert.DeserializeObject<CacheData>(json);
+                        var cached = JsonSerializer.Deserialize<CacheData>(json);
                         if (cached?.Modpacks != null && cached.Modpacks.Count > 0)
                         {
                             _cache = cached.Modpacks;
@@ -69,7 +71,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.FeedTheBeast
 
                 // 从API获取
                 var idsJson = await GetDataAsync("/modpack/all");
-                var idsDoc = JObject.Parse(idsJson);
+                var idsDoc = JsonNode.Parse(idsJson)!.AsObject();
                 var ids = idsDoc["packs"]?.ToObject<List<int>>() ?? new List<int>();
 
                 var semaphore = new SemaphoreSlim(8);
@@ -79,7 +81,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.FeedTheBeast
                     try
                     {
                         var packJson = await GetDataAsync($"/modpack/{id}");
-                        return JsonConvert.DeserializeObject<ModpackInfo>(packJson);
+                        return JsonSerializer.Deserialize<ModpackInfo>(packJson);
                     }
                     catch { return null; }
                     finally { semaphore.Release(); }
@@ -96,7 +98,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.FeedTheBeast
                     if (!string.IsNullOrEmpty(dir))
                         Directory.CreateDirectory(dir);
                     var cacheData = new CacheData { SavedAt = _cacheSavedAt, Modpacks = _cache };
-                    await File.WriteAllTextAsync(_cacheFile, JsonConvert.SerializeObject(cacheData));
+                    await File.WriteAllTextAsync(_cacheFile, JsonSerializer.Serialize(cacheData));
                 }
                 catch { /* 缓存写入失败不影响功能 */ }
 
@@ -191,7 +193,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.FeedTheBeast
             try
             {
                 var json = await GetDataAsync($"/modpack/{id}");
-                return JsonConvert.DeserializeObject<ModpackInfo>(json);
+                return JsonSerializer.Deserialize<ModpackInfo>(json);
             }
             catch { return null; }
         }
@@ -204,7 +206,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.FeedTheBeast
             try
             {
                 var json = await GetDataAsync($"/modpack/{packId}/{versionId}");
-                return JsonConvert.DeserializeObject<VersionDetail>(json);
+                return JsonSerializer.Deserialize<VersionDetail>(json);
             }
             catch { return null; }
         }
@@ -217,7 +219,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.FeedTheBeast
             try
             {
                 var json = await GetDataAsync($"/modpack/{packId}/{versionId}/changelog");
-                return JsonConvert.DeserializeObject<ChangelogResult>(json);
+                return JsonSerializer.Deserialize<ChangelogResult>(json);
             }
             catch { return null; }
         }
@@ -269,10 +271,10 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.FeedTheBeast
 
         internal class CacheData
         {
-            [JsonProperty("savedAt")]
+            [JsonPropertyName("savedAt")]
             public long SavedAt { get; set; }
 
-            [JsonProperty("modpacks")]
+            [JsonPropertyName("modpacks")]
             public List<ModpackInfo> Modpacks { get; set; } = new();
         }
 
@@ -281,241 +283,241 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.FeedTheBeast
         /// </summary>
         public class ModpackInfo
         {
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public int Id { get; set; }
 
-            [JsonProperty("name")]
+            [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
 
-            [JsonProperty("slug")]
+            [JsonPropertyName("slug")]
             public string Slug { get; set; } = string.Empty;
 
-            [JsonProperty("synopsis")]
+            [JsonPropertyName("synopsis")]
             public string Synopsis { get; set; } = string.Empty;
 
-            [JsonProperty("description")]
+            [JsonPropertyName("description")]
             public string Description { get; set; } = string.Empty;
 
-            [JsonProperty("type")]
+            [JsonPropertyName("type")]
             public string Type { get; set; } = string.Empty;
 
-            [JsonProperty("featured")]
+            [JsonPropertyName("featured")]
             public bool? Featured { get; set; }
 
-            [JsonProperty("plays")]
+            [JsonPropertyName("plays")]
             public long Plays { get; set; }
 
-            [JsonProperty("installs")]
+            [JsonPropertyName("installs")]
             public long Installs { get; set; }
 
-            [JsonProperty("plays_14d")]
+            [JsonPropertyName("plays_14d")]
             public long Plays14d { get; set; }
 
-            [JsonProperty("updated")]
+            [JsonPropertyName("updated")]
             public long Updated { get; set; }
 
-            [JsonProperty("released")]
+            [JsonPropertyName("released")]
             public long Released { get; set; }
 
-            [JsonProperty("private")]
+            [JsonPropertyName("private")]
             public bool Private { get; set; }
 
-            [JsonProperty("tags")]
+            [JsonPropertyName("tags")]
             public List<TagInfo>? Tags { get; set; }
 
-            [JsonProperty("versions")]
+            [JsonPropertyName("versions")]
             public List<VersionInfo>? Versions { get; set; }
 
-            [JsonProperty("authors")]
+            [JsonPropertyName("authors")]
             public List<AuthorInfo>? Authors { get; set; }
 
-            [JsonProperty("links")]
+            [JsonPropertyName("links")]
             public List<LinkInfo>? Links { get; set; }
 
-            [JsonProperty("art")]
+            [JsonPropertyName("art")]
             public List<ArtInfo>? Art { get; set; }
 
-            [JsonProperty("meta")]
+            [JsonPropertyName("meta")]
             public MetaInfo? Meta { get; set; }
 
-            [JsonProperty("rating")]
+            [JsonPropertyName("rating")]
             public RatingInfo? Rating { get; set; }
         }
 
         public class TagInfo
         {
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public int Id { get; set; }
 
-            [JsonProperty("name")]
+            [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
         }
 
         public class VersionInfo
         {
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public int Id { get; set; }
 
-            [JsonProperty("name")]
+            [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
 
-            [JsonProperty("type")]
+            [JsonPropertyName("type")]
             public string Type { get; set; } = string.Empty;
 
-            [JsonProperty("updated")]
+            [JsonPropertyName("updated")]
             public long Updated { get; set; }
 
-            [JsonProperty("released")]
+            [JsonPropertyName("released")]
             public long Released { get; set; }
 
-            [JsonProperty("private")]
+            [JsonPropertyName("private")]
             public bool Private { get; set; }
 
-            [JsonProperty("specs")]
+            [JsonPropertyName("specs")]
             public SpecsInfo? Specs { get; set; }
 
-            [JsonProperty("targets")]
+            [JsonPropertyName("targets")]
             public List<TargetInfo>? Targets { get; set; }
         }
 
         public class SpecsInfo
         {
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public int Id { get; set; }
 
-            [JsonProperty("minimum")]
+            [JsonPropertyName("minimum")]
             public int Minimum { get; set; }
 
-            [JsonProperty("recommended")]
+            [JsonPropertyName("recommended")]
             public int Recommended { get; set; }
         }
 
         public class TargetInfo
         {
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public int Id { get; set; }
 
-            [JsonProperty("name")]
+            [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
 
-            [JsonProperty("version")]
+            [JsonPropertyName("version")]
             public string Version { get; set; } = string.Empty;
 
-            [JsonProperty("type")]
+            [JsonPropertyName("type")]
             public string Type { get; set; } = string.Empty;
 
-            [JsonProperty("updated")]
+            [JsonPropertyName("updated")]
             public long Updated { get; set; }
         }
 
         public class AuthorInfo
         {
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public int Id { get; set; }
 
-            [JsonProperty("name")]
+            [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
 
-            [JsonProperty("type")]
+            [JsonPropertyName("type")]
             public string Type { get; set; } = string.Empty;
 
-            [JsonProperty("website")]
+            [JsonPropertyName("website")]
             public string Website { get; set; } = string.Empty;
 
-            [JsonProperty("updated")]
+            [JsonPropertyName("updated")]
             public long Updated { get; set; }
         }
 
         public class LinkInfo
         {
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public int Id { get; set; }
 
-            [JsonProperty("name")]
+            [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
 
-            [JsonProperty("link")]
+            [JsonPropertyName("link")]
             public string Url { get; set; } = string.Empty;
 
-            [JsonProperty("type")]
+            [JsonPropertyName("type")]
             public string Type { get; set; } = string.Empty;
         }
 
         public class ArtInfo
         {
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public int Id { get; set; }
 
-            [JsonProperty("url")]
+            [JsonPropertyName("url")]
             public string Url { get; set; } = string.Empty;
 
-            [JsonProperty("type")]
+            [JsonPropertyName("type")]
             public string Type { get; set; } = string.Empty;
 
-            [JsonProperty("width")]
+            [JsonPropertyName("width")]
             public int Width { get; set; }
 
-            [JsonProperty("height")]
+            [JsonPropertyName("height")]
             public int Height { get; set; }
 
-            [JsonProperty("compressed")]
+            [JsonPropertyName("compressed")]
             public bool Compressed { get; set; }
 
-            [JsonProperty("sha1")]
+            [JsonPropertyName("sha1")]
             public string Sha1 { get; set; } = string.Empty;
 
-            [JsonProperty("size")]
+            [JsonPropertyName("size")]
             public long Size { get; set; }
 
-            [JsonProperty("updated")]
+            [JsonPropertyName("updated")]
             public long Updated { get; set; }
         }
 
         public class MetaInfo
         {
-            [JsonProperty("supportsWorlds")]
+            [JsonPropertyName("supportsWorlds")]
             public bool SupportsWorlds { get; set; }
 
-            [JsonProperty("curseforgeProjectId")]
+            [JsonPropertyName("curseforgeProjectId")]
             public int? CurseforgeProjectId { get; set; }
 
-            [JsonProperty("isLegacy")]
+            [JsonPropertyName("isLegacy")]
             public bool IsLegacy { get; set; }
         }
 
         public class RatingInfo
         {
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public int Id { get; set; }
 
-            [JsonProperty("configured")]
+            [JsonPropertyName("configured")]
             public bool Configured { get; set; }
 
-            [JsonProperty("verified")]
+            [JsonPropertyName("verified")]
             public bool Verified { get; set; }
 
-            [JsonProperty("age")]
+            [JsonPropertyName("age")]
             public int Age { get; set; }
 
-            [JsonProperty("gambling")]
+            [JsonPropertyName("gambling")]
             public bool Gambling { get; set; }
 
-            [JsonProperty("frightening")]
+            [JsonPropertyName("frightening")]
             public bool Frightening { get; set; }
 
-            [JsonProperty("alcoholdrugs")]
+            [JsonPropertyName("alcoholdrugs")]
             public bool AlcoholDrugs { get; set; }
 
-            [JsonProperty("nuditysexual")]
+            [JsonPropertyName("nuditysexual")]
             public bool NuditySexual { get; set; }
 
-            [JsonProperty("sterotypeshate")]
+            [JsonPropertyName("sterotypeshate")]
             public bool StereotypesHate { get; set; }
 
-            [JsonProperty("language")]
+            [JsonPropertyName("language")]
             public bool Language { get; set; }
 
-            [JsonProperty("violence")]
+            [JsonPropertyName("violence")]
             public bool Violence { get; set; }
         }
 
@@ -524,91 +526,91 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.FeedTheBeast
         /// </summary>
         public class VersionDetail
         {
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public int Id { get; set; }
 
-            [JsonProperty("parent")]
+            [JsonPropertyName("parent")]
             public int Parent { get; set; }
 
-            [JsonProperty("name")]
+            [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
 
-            [JsonProperty("type")]
+            [JsonPropertyName("type")]
             public string Type { get; set; } = string.Empty;
 
-            [JsonProperty("plays")]
+            [JsonPropertyName("plays")]
             public long Plays { get; set; }
 
-            [JsonProperty("installs")]
+            [JsonPropertyName("installs")]
             public long Installs { get; set; }
 
-            [JsonProperty("updated")]
+            [JsonPropertyName("updated")]
             public long Updated { get; set; }
 
-            [JsonProperty("changelog")]
+            [JsonPropertyName("changelog")]
             public string ChangelogUrl { get; set; } = string.Empty;
 
-            [JsonProperty("specs")]
+            [JsonPropertyName("specs")]
             public SpecsInfo? Specs { get; set; }
 
-            [JsonProperty("targets")]
+            [JsonPropertyName("targets")]
             public List<TargetInfo>? Targets { get; set; }
 
-            [JsonProperty("files")]
+            [JsonPropertyName("files")]
             public List<FileInfo>? Files { get; set; }
         }
 
         public class FileInfo
         {
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public long Id { get; set; }
 
-            [JsonProperty("type")]
+            [JsonPropertyName("type")]
             public string Type { get; set; } = string.Empty;
 
-            [JsonProperty("path")]
+            [JsonPropertyName("path")]
             public string Path { get; set; } = string.Empty;
 
-            [JsonProperty("name")]
+            [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
 
-            [JsonProperty("version")]
+            [JsonPropertyName("version")]
             public string Version { get; set; } = string.Empty;
 
-            [JsonProperty("url")]
+            [JsonPropertyName("url")]
             public string Url { get; set; } = string.Empty;
 
-            [JsonProperty("sha1")]
+            [JsonPropertyName("sha1")]
             public string Sha1 { get; set; } = string.Empty;
 
-            [JsonProperty("size")]
+            [JsonPropertyName("size")]
             public long Size { get; set; }
 
-            [JsonProperty("clientonly")]
+            [JsonPropertyName("clientonly")]
             public bool ClientOnly { get; set; }
 
-            [JsonProperty("serveronly")]
+            [JsonPropertyName("serveronly")]
             public bool ServerOnly { get; set; }
 
-            [JsonProperty("optional")]
+            [JsonPropertyName("optional")]
             public bool Optional { get; set; }
 
-            [JsonProperty("updated")]
+            [JsonPropertyName("updated")]
             public long Updated { get; set; }
         }
 
         public class ChangelogResult
         {
-            [JsonProperty("status")]
+            [JsonPropertyName("status")]
             public string Status { get; set; } = string.Empty;
 
-            [JsonProperty("content")]
+            [JsonPropertyName("content")]
             public string Content { get; set; } = string.Empty;
 
-            [JsonProperty("html")]
+            [JsonPropertyName("html")]
             public string Html { get; set; } = string.Empty;
 
-            [JsonProperty("updated")]
+            [JsonPropertyName("updated")]
             public long Updated { get; set; }
         }
     }

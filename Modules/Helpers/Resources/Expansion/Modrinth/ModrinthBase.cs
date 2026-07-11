@@ -1,5 +1,5 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -51,7 +51,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth
             {
                 url = BASEURL + url;
             }
-            var jsonData = JsonConvert.SerializeObject(data);
+            var jsonData = JsonSerializer.Serialize(data);
             var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync(url, content);
             response.EnsureSuccessStatusCode();
@@ -136,7 +136,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth
                 if (string.IsNullOrEmpty(response))
                     throw new Exception("搜索失败，响应为空");
 
-                return JsonConvert.DeserializeObject<SearchResult>(response)
+                return JsonSerializer.Deserialize<SearchResult>(response)
                     ?? throw new Exception("无法将响应转换为搜索结果模型");
             }
             catch (JsonException ex)
@@ -170,7 +170,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth
                 if (string.IsNullOrEmpty(response))
                     throw new Exception("获取项目信息失败，响应为空");
 
-                return JsonConvert.DeserializeObject<ProjectInfo>(response)
+                return JsonSerializer.Deserialize<ProjectInfo>(response)
                     ?? throw new Exception("无法将响应转换为项目信息模型");
             }
             catch (JsonException ex)
@@ -198,7 +198,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth
             try
             {
                 string response = await GetDataAsync(url);
-                var responseObj = JsonConvert.DeserializeObject<ModrinthVersionResponse>(response);
+                var responseObj = JsonSerializer.Deserialize<ModrinthVersionResponse>(response);
                 return responseObj!.Values.ToList() ?? new List<ModrinthVersionInfo>();
             }
             catch (Exception)
@@ -223,7 +223,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth
             try
             {
                 string response = await PostDataAsync(url, new { hashes = Hashes, algorithm = "sha1" });
-                var responseObj = JsonConvert.DeserializeObject<ModrinthVersionResponse>(response)
+                var responseObj = JsonSerializer.Deserialize<ModrinthVersionResponse>(response)
                     ?? throw new Exception("无法将响应转换为版本信息模型");
                 return responseObj.ToDictionary(
                     kv => kv.Key,
@@ -263,7 +263,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth
             try
             {
                 string response = await GetDataAsync(url);
-                return JsonConvert.DeserializeObject<VersionInfo>(response)
+                return JsonSerializer.Deserialize<VersionInfo>(response)
                     ?? throw new Exception("无法将响应转换为版本信息模型");
             }
             catch (JsonException)
@@ -314,7 +314,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth
                 if (tagType == "project_type")
                 {
                     // 解析字符串数组
-                    var stringTags = JsonConvert.DeserializeObject<List<string>>(response);
+                    var stringTags = JsonSerializer.Deserialize<List<string>>(response);
                     if (stringTags != null)
                     {
                         tags.AddRange(stringTags.Select(t => new ModrinthTag
@@ -327,7 +327,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth
                 else
                 {
                     // 分类和加载器返回的是对象数组
-                    var objectTags = JsonConvert.DeserializeObject<List<ModrinthTag>>(response);
+                    var objectTags = JsonSerializer.Deserialize<List<ModrinthTag>>(response);
                     if (objectTags != null)
                     {
                         tags.AddRange(objectTags);
@@ -353,16 +353,16 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth
             // 用于直接存储字符串类型的标签
             public string StringValue { get; set; } = string.Empty;
 
-            [JsonProperty("name")]
+            [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
 
-            [JsonProperty("icon")]
+            [JsonPropertyName("icon")]
             public string Icon { get; set; } = string.Empty;
 
-            [JsonProperty("description")]
+            [JsonPropertyName("description")]
             public string Description { get; set; } = string.Empty;
 
-            [JsonProperty("checked")]
+            [JsonPropertyName("checked")]
             public bool IsChecked { get; set; } = false;
         }
 
@@ -385,10 +385,10 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth
         // 搜索结果模型
         public class SearchResult
         {
-            [JsonProperty("hits")]
+            [JsonPropertyName("hits")]
             public List<SearchResultInfo> Results { get; set; } = new List<SearchResultInfo>(); // 搜索结果列表
 
-            [JsonProperty("total_hits")]
+            [JsonPropertyName("total_hits")]
             public int TotalResults { get; set; } = 0; // 总结果数量
         }
 
@@ -396,147 +396,147 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth
         // 搜索结果详细信息
         public class SearchResultInfo
         {
-            [JsonProperty("project_id")]
+            [JsonPropertyName("project_id")]
             public string Id { get; set; } = string.Empty; // 项目唯一ID（8位base62）
 
-            [JsonProperty("slug")]
+            [JsonPropertyName("slug")]
             public string Slug { get; set; } = string.Empty; // 项目别名（URL友好）
 
-            [JsonProperty("title")]
+            [JsonPropertyName("title")]
             public string Name { get; set; } = string.Empty; // 项目名称
 
-            [JsonProperty("description")]
+            [JsonPropertyName("description")]
             public string Description { get; set; } = string.Empty; // 简短描述
 
-            [JsonProperty("body")]
+            [JsonPropertyName("body")]
             public string FullDescription { get; set; } = string.Empty; // 详细描述（HTML格式）
 
-            [JsonProperty("project_type")]
+            [JsonPropertyName("project_type")]
             public string Type { get; set; } = string.Empty; // 项目类型（对应ProjectType常量）
 
-            [JsonProperty("client_side")]
+            [JsonPropertyName("client_side")]
             public string ClientSide { get; set; } = string.Empty; // 客户端支持类型
 
-            [JsonProperty("server_side")]
+            [JsonPropertyName("server_side")]
             public string ServerSide { get; set; } = string.Empty; // 服务器支持类型
 
-            [JsonProperty("downloads")]
+            [JsonPropertyName("downloads")]
             public int DownloadCount { get; set; } = 0; // 总下载量
 
-            [JsonProperty("follows")]
+            [JsonPropertyName("follows")]
             public int FollowCount { get; set; } = 0; // 关注数
 
-            [JsonProperty("icon_url")]
+            [JsonPropertyName("icon_url")]
             public string IconUrl { get; set; } = string.Empty; // 图标URL
 
-            [JsonProperty("date_created")]
+            [JsonPropertyName("date_created")]
             public DateTime CreatedAt { get; set; } = DateTime.MinValue; // 创建时间
 
-            [JsonProperty("date_modified")]
+            [JsonPropertyName("date_modified")]
             public DateTime UpdatedAt { get; set; } = DateTime.MinValue; // 最后更新时间
 
-            [JsonProperty("license")]
+            [JsonPropertyName("license")]
             public string License { get; set; } = string.Empty; // 许可证信息
 
-            [JsonProperty("author")]
+            [JsonPropertyName("author")]
             public string Author { get; set; } = string.Empty; // 作者
 
-            [JsonProperty("categories")]
+            [JsonPropertyName("categories")]
             public List<string> Categories { get; set; } = new List<string>(); // 分类标签（如"technology"）
 
-            [JsonProperty("tags")]
+            [JsonPropertyName("tags")]
             public List<string> Tags { get; set; } = new List<string>(); // 自定义标签
 
-            [JsonProperty("versions")]
+            [JsonPropertyName("versions")]
             public List<string> VersionIds { get; set; } = new List<string>(); // 版本ID列表
 
-            [JsonProperty("gallery")]
+            [JsonPropertyName("gallery")]
             public List<string> GalleryUrls { get; set; } = new List<string>(); // 画廊图片URL列表
         }
 
         // 项目信息模型（用于获取项目详细信息）
         public class ProjectInfo
         {
-            [JsonProperty("client_side")]
+            [JsonPropertyName("client_side")]
             public string ClientSide { get; set; } = string.Empty; // 客户端支持类型
 
-            [JsonProperty("server_side")]
+            [JsonPropertyName("server_side")]
             public string ServerSide { get; set; } = string.Empty; // 服务器支持类型
 
-            [JsonProperty("game_versions")]
+            [JsonPropertyName("game_versions")]
             public List<string> GameVersionIds { get; set; } = new List<string>(); // 版本ID列表
 
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public string Id { get; set; } = string.Empty; // 项目唯一ID（8位base62）
 
-            [JsonProperty("slug")]
+            [JsonPropertyName("slug")]
             public string Slug { get; set; } = string.Empty; // 项目别名
 
-            [JsonProperty("project_type")]
+            [JsonPropertyName("project_type")]
             public string Type { get; set; } = string.Empty; // 项目类型
 
-            [JsonProperty("team")]
+            [JsonPropertyName("team")]
             public string Team { get; set; } = string.Empty; // 团队ID
-            [JsonProperty("organization")]
+            [JsonPropertyName("organization")]
             public string Organization { get; set; } = string.Empty; // 组织
 
-            [JsonProperty("title")]
+            [JsonPropertyName("title")]
             public string Name { get; set; } = string.Empty; // 项目名称
 
-            [JsonProperty("description")]
+            [JsonPropertyName("description")]
             public string Description { get; set; } = string.Empty; // 简短描述
 
-            [JsonProperty("body")]
+            [JsonPropertyName("body")]
             public string FullDescription { get; set; } = string.Empty; // 详细描述（MarkDown格式）
 
             //body_url不保留，因为Modrinth已经不再使用该字段body_url The link to the long description of the project.Always null, only kept for legacy compatibility.
-            [JsonProperty("published")]
+            [JsonPropertyName("published")]
             public DateTime PublishAt { get; set; } = DateTime.MinValue; // 创建时间
 
-            [JsonProperty("updated")]
+            [JsonPropertyName("updated")]
             public DateTime UpdatedAt { get; set; } = DateTime.MinValue; // 最后更新时间
 
-            [JsonProperty("approved")]
+            [JsonPropertyName("approved")]
             public DateTime ApprovedAt { get; set; } = DateTime.MinValue; // 审核时间
             //queued不保留因为不需要
-            //[JsonProperty("license")]
+            //[JsonPropertyName("license")]
             //public string License { get; set; } = string.Empty; // 许可证信息
 
-            [JsonProperty("downloads")]
+            [JsonPropertyName("downloads")]
             public int DownloadCount { get; set; } = 0; // 总下载量
 
-            [JsonProperty("followers")]
+            [JsonPropertyName("followers")]
             public int FollowCount { get; set; } = 0; // 关注数
 
-            [JsonProperty("categories")]
+            [JsonPropertyName("categories")]
             public List<string> Categories { get; set; } = new List<string>(); // 分类标签（如"technology"）
 
-            [JsonProperty("additional_categories")]
+            [JsonPropertyName("additional_categories")]
             public List<string> AdditionalCategories { get; set; } = new List<string>(); // 附加分类标签
 
-            [JsonProperty("loaders")]
+            [JsonPropertyName("loaders")]
             public List<string> Loaders { get; set; } = new List<string>(); // 加载器支持列表（如"forge", "fabric"）
 
-            [JsonProperty("versions")]
+            [JsonPropertyName("versions")]
             public List<string> Versions { get; set; } = new List<string>(); // 项目版本ID列表(8位base62)
 
-            [JsonProperty("icon_url")]
+            [JsonPropertyName("icon_url")]
             public string IconUrl { get; set; } = string.Empty; // 图标URL
 
-            [JsonProperty("issues_url")]
+            [JsonPropertyName("issues_url")]
             public string IssuesUrl { get; set; } = string.Empty; // IssuesURL
 
-            [JsonProperty("source_url")]
+            [JsonPropertyName("source_url")]
             public string SourceUrl { get; set; } = string.Empty; // 源码URL
 
-            [JsonProperty("wiki_url")]
+            [JsonPropertyName("wiki_url")]
             public string WikiUrl { get; set; } = string.Empty; // Wiki URL
 
-            [JsonProperty("discord_url")]
+            [JsonPropertyName("discord_url")]
             public string DiscordUrl { get; set; } = string.Empty; // Discord URL
 
 
-            [JsonProperty("gallery")]
+            [JsonPropertyName("gallery")]
             public List<GalleryItem> Gallery { get; set; } = new List<GalleryItem>(); // 画廊图片URL列表
 
             //剩下不需要
@@ -544,49 +544,49 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth
 
         public class VersionInfo
         {
-            [JsonProperty("game_versions")]
+            [JsonPropertyName("game_versions")]
             public List<string> GameVersionIds { get; set; } = new List<string>(); // 游戏版本ID列表
 
-            [JsonProperty("loaders")]
+            [JsonPropertyName("loaders")]
             public List<string> Loaders { get; set; } = new List<string>(); // 支持的加载器列表
 
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public string Id { get; set; } = string.Empty; // 版本ID（8位base62）
 
-            [JsonProperty("slug")]
+            [JsonPropertyName("slug")]
             public string Slug { get; set; } = string.Empty; // 别名（URL友好）
 
-            [JsonProperty("project_id")]
+            [JsonPropertyName("project_id")]
             public string ProjectId { get; set; } = string.Empty; // 所属项目ID
 
-            [JsonProperty("title")]
+            [JsonPropertyName("title")]
             public string Name { get; set; } = string.Empty; // 版本名称
 
-            [JsonProperty("versions")]
+            [JsonPropertyName("versions")]
             public List<string> Versions { get; set; } = new List<string>(); // 项目版本ID列表(8位base62)
 
-            [JsonProperty("changelog")]
+            [JsonPropertyName("changelog")]
             public string Changelog { get; set; } = string.Empty; // 更新日志
 
-            [JsonProperty("published")]
+            [JsonPropertyName("published")]
             public DateTime PublishedAt { get; set; } = DateTime.MinValue; // 发布时间
 
-            [JsonProperty("updated")]
+            [JsonPropertyName("updated")]
             public DateTime UpdatedAt { get; set; } = DateTime.MinValue; // 更新时间
 
-            [JsonProperty("approved")]
+            [JsonPropertyName("approved")]
             public DateTime ApprovedAt { get; set; } = DateTime.MinValue; // 审核时间
 
-            [JsonProperty("downloads")]
+            [JsonPropertyName("downloads")]
             public int DownloadCount { get; set; } = 0; // 该版本下载量
 
-            [JsonProperty("icon_url")]
+            [JsonPropertyName("icon_url")]
             public string IconUrl { get; set; } = string.Empty; // 图标URL
 
-            [JsonProperty("files")]
+            [JsonPropertyName("files")]
             public List<VersionFileInfo> Files { get; set; } = new List<VersionFileInfo>(); // 版本文件列表
 
-            [JsonProperty("dependencies")]
+            [JsonPropertyName("dependencies")]
             public List<DependenciesInfo> DependenciesInfos { get; set; } = new List<DependenciesInfo>();
         }
 
@@ -594,43 +594,43 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth
 
         public class ModrinthVersionInfo
         {
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public string Id { get; set; } = string.Empty;
 
-            [JsonProperty("project_id")]
+            [JsonPropertyName("project_id")]
             public string ProjectId { get; set; } = string.Empty;
 
-            [JsonProperty("author_id")]
+            [JsonPropertyName("author_id")]
             public string AuthorId { get; set; } = string.Empty;
 
-            [JsonProperty("name")]
+            [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
 
-            [JsonProperty("version_number")]
+            [JsonPropertyName("version_number")]
             public string VersionNumber { get; set; } = string.Empty;
 
-            [JsonProperty("game_versions")]
+            [JsonPropertyName("game_versions")]
             public List<string> GameVersions { get; set; } = new List<string>();
 
-            [JsonProperty("loaders")]
+            [JsonPropertyName("loaders")]
             public List<string> Loaders { get; set; } = new List<string>();
 
-            [JsonProperty("date_published")]
+            [JsonPropertyName("date_published")]
             public DateTime DatePublished { get; set; }
 
-            [JsonProperty("files")]
+            [JsonPropertyName("files")]
             public List<ModrinthFile> Files { get; set; } = new List<ModrinthFile>();
         }
 
         public class ModrinthFile
         {
-            [JsonProperty("hashes")]
+            [JsonPropertyName("hashes")]
             public Dictionary<string, string> Hashes { get; set; } = new Dictionary<string, string>();
 
-            [JsonProperty("filename")]
+            [JsonPropertyName("filename")]
             public string FileName { get; set; } = string.Empty;
 
-            [JsonProperty("url")]
+            [JsonPropertyName("url")]
             public string Url { get; set; } = string.Empty;
         }
 
@@ -642,77 +642,80 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth
             /// <summary>
             /// 画廊图片的URL（必填）
             /// </summary>
-            [JsonProperty("url", Required = Required.Always)]
+            [JsonRequired]
+            [JsonPropertyName("url")]
             public string? Url { get; set; }
 
             /// <summary>
             /// 图片是否在画廊中被标记为精选（必填）
             /// </summary>
-            [JsonProperty("featured", Required = Required.Always)]
+            [JsonRequired]
+            [JsonPropertyName("featured")]
             public bool Featured { get; set; }
 
             /// <summary>
             /// 画廊图片的标题（可选，可为null）
             /// </summary>
-            [JsonProperty("title")]
+            [JsonPropertyName("title")]
             public string? Title { get; set; }
 
             /// <summary>
             /// 画廊图片的描述（可选，可为null）
             /// </summary>
-            [JsonProperty("description")]
+            [JsonPropertyName("description")]
             public string? Description { get; set; }
 
             /// <summary>
             /// 画廊图片的创建日期和时间（必填，ISO-8601格式）
             /// </summary>
-            [JsonProperty("created", Required = Required.Always)]
+            [JsonRequired]
+            [JsonPropertyName("created")]
             public DateTime Created { get; set; }
 
             /// <summary>
             /// 画廊图片的排序序号。画廊图片将按此字段排序，然后按标题字母顺序排序
             /// </summary>
-            [JsonProperty("ordering")]
+            [JsonPropertyName("ordering")]
             public int? Ordering { get; set; }
         }
 
         // 版本信息模型
         public class ProjectVersionInfo
         {
-            [JsonProperty("game_versions")]
+            [JsonPropertyName("game_versions")]
             public List<string> GameVersionIds { get; set; } = new List<string>(); // 游戏版本ID列表
 
-            [JsonProperty("loaders")]
+            [JsonPropertyName("loaders")]
             public List<string> Loaders { get; set; } = new List<string>(); // 支持的加载器列表
 
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public string Id { get; set; } = string.Empty; // 版本ID（8位base62）
 
-            [JsonProperty("project_id")]
+            [JsonPropertyName("project_id")]
             public string ProjectId { get; set; } = string.Empty; // 所属项目ID
 
-            [JsonProperty("name")]
+            [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty; // 版本名称
 
-            [JsonProperty("version_number")]
+            [JsonPropertyName("version_number")]
             public string VersionNumber { get; set; } = string.Empty; // 版本号（如"1.0.0"）
 
-            [JsonProperty("changelog")]
+            [JsonPropertyName("changelog")]
             public string Changelog { get; set; } = string.Empty; // 更新日志
 
-            [JsonProperty("date_published")]
+            [JsonPropertyName("date_published")]
             public DateTime PublishedAt { get; set; } = DateTime.MinValue; // 发布时间
 
-            [JsonProperty("downloads")]
+            [JsonPropertyName("downloads")]
             public int DownloadCount { get; set; } = 0; // 该版本下载量
 
-            [JsonProperty("version_type")]
+            [JsonPropertyName("version_type")]
             public string VersionType { get; set; } = string.Empty; // 版本类型（如"release", "beta", "alpha"）
 
-            [JsonProperty("files")]
+            [JsonPropertyName("files")]
             public List<VersionFileInfo> Files { get; set; } = new List<VersionFileInfo>(); // 版本文件列表
 
-            [JsonProperty("dependencies")]
+            [JsonPropertyName("dependencies")]
             public List<DependenciesInfo> DependenciesInfos { get; set; } = new List<DependenciesInfo>();
 
         }
@@ -721,47 +724,47 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth
         public class VersionFileInfo
         {
 
-            [JsonProperty("filename")]
+            [JsonPropertyName("filename")]
             public string Filename { get; set; } = string.Empty; // 文件名
 
-            [JsonProperty("url")]
+            [JsonPropertyName("url")]
             public string DownloadUrl { get; set; } = string.Empty; // 下载URL
 
-            [JsonProperty("size")]
+            [JsonPropertyName("size")]
             public long Size { get; set; } = 0; // 文件大小（bytes字节）
 
-            [JsonProperty("primary")]
+            [JsonPropertyName("primary")]
             public bool IsPrimary { get; set; } = false; // 是否为主要文件
 
-            [JsonProperty("file_type")]
+            [JsonPropertyName("file_type")]
             public string FileType { get; set; } = string.Empty; //  附加文件的类型，主要用于将资源包添加到数据包中Allowed values: required-resource-pack,optional-resource-pack
 
-            [JsonProperty("hashes")]
+            [JsonPropertyName("hashes")]
             public FileHashes Hashes { get; set; } = new FileHashes(); // 文件哈希值
         }
 
         // 文件哈希子模型
         public class FileHashes
         {
-            [JsonProperty("sha1")]
+            [JsonPropertyName("sha1")]
             public string Sha1 { get; set; } = string.Empty; // SHA1哈希
 
-            [JsonProperty("sha512")]
+            [JsonPropertyName("sha512")]
             public string Sha512 { get; set; } = string.Empty; // SHA512哈希
         }
 
         public class DependenciesInfo
         {
-            [JsonProperty("version_id")]
+            [JsonPropertyName("version_id")]
             public string VersionId { get; set; } = string.Empty; //当前版本所依赖的版本ID
 
-            [JsonProperty("project_id")]
+            [JsonPropertyName("project_id")]
             public string ProjectId { get; set; } = string.Empty; //当前版本所依赖的项目ID
 
-            [JsonProperty("file_name")]
+            [JsonPropertyName("file_name")]
             public string FileName { get; set; } = string.Empty; // 当前版本所依赖的文件名
 
-            [JsonProperty("dependency_type")]
+            [JsonPropertyName("dependency_type")]
             public string DependencyType { get; set; } = string.Empty; // 当前版本所依赖的类型 required optional incompatible embedded
         }
 
@@ -783,7 +786,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth
             public const string Updated = "updated";
         }
 
-        [JsonConverter(typeof(StringEnumConverter))]
+        [JsonConverter(typeof(JsonStringEnumConverter<ModLoaderType>))]
         public enum ModLoaderType
         {
             minecraft,

@@ -1,6 +1,8 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Diagnostics;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
+using Qomicex.Core.Common;
 using System.Text;
 using System.Text.RegularExpressions;
 using static System.Net.WebRequestMethods;
@@ -186,16 +188,16 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                     if (response.IsSuccessStatusCode)
                     {
                         var json = await response.Content.ReadAsStringAsync();
-                        var versionsArray = JArray.Parse(json);
+                        var versionsArray = JsonNode.Parse(json)!.AsArray();
 
-                        foreach (var version in versionsArray.Children<JObject>())
+                        foreach (var version in versionsArray.OfType<JsonObject>())
                         {
                             string apiMcVersion = version["mcversion"]?.ToString() ?? string.Empty;
                             if (!apiMcVersion.Equals(minecraftVersion, StringComparison.OrdinalIgnoreCase))
                                 continue;
 
                             // 提取安装器信息
-                            var installerFile = version["files"]?.Children<JObject>()
+                            var installerFile = version["files"]?.AsArray().OfType<JsonObject>()
                             .FirstOrDefault(f => f["category"]?.ToString().Equals("installer", StringComparison.OrdinalIgnoreCase) == true);
 
                             if (installerFile == null)
@@ -604,13 +606,13 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                         loaderResponse.EnsureSuccessStatusCode();
 
                         var loaderJson = await loaderResponse.Content.ReadAsStringAsync();
-                        var loaderArray = JArray.Parse(loaderJson);
+                        var loaderArray = JsonNode.Parse(loaderJson)!.AsArray();
 
                         // 3. 解析 Loader 版本信息
-                        foreach (var item in loaderArray.Children<JObject>())
+                        foreach (var item in loaderArray.OfType<JsonObject>())
                         {
-                            var loaderInfo = item["loader"] as JObject;
-                            var intermediaryInfo = item["intermediary"] as JObject;
+                            var loaderInfo = item["loader"] as JsonObject;
+                            var intermediaryInfo = item["intermediary"] as JsonObject;
 
                             if (loaderInfo == null || intermediaryInfo == null)
                             {
@@ -682,13 +684,13 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                         loaderResponse.EnsureSuccessStatusCode();
 
                         var loaderJson = await loaderResponse.Content.ReadAsStringAsync();
-                        var loaderArray = JArray.Parse(loaderJson);
+                        var loaderArray = JsonNode.Parse(loaderJson)!.AsArray();
 
                         // 3. 解析 Loader 版本信息
-                        foreach (var item in loaderArray.Children<JObject>())
+                        foreach (var item in loaderArray.OfType<JsonObject>())
                         {
-                            var loaderInfo = item["loader"] as JObject;
-                            var intermediaryInfo = item["intermediary"] as JObject;
+                            var loaderInfo = item["loader"] as JsonObject;
+                            var intermediaryInfo = item["intermediary"] as JsonObject;
 
                             if (loaderInfo == null || intermediaryInfo == null)
                             {
@@ -747,8 +749,8 @@ namespace Qomicex.Core.Modules.Helpers.Resources
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();
-            var gameVersions = JArray.Parse(json)
-            .Children<JObject>()
+            var gameVersions = JsonNode.Parse(json)!.AsArray()
+            .OfType<JsonObject>()
             .Select(j => j["version"]?.ToString())
             .Where(v => !string.IsNullOrEmpty(v))
             .ToHashSet();
@@ -948,7 +950,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<OfficialApiResult>(json) ?? new OfficialApiResult();
+            return JsonSerializer.Deserialize<OfficialApiResult>(json) ?? new OfficialApiResult();
         }
 
         /// <summary>
@@ -1010,10 +1012,10 @@ namespace Qomicex.Core.Modules.Helpers.Resources
 
         private class OfficialApiResult
         {
-            [JsonProperty("isSnapshot")]
+            [JsonPropertyName("isSnapshot")]
             public bool IsSnapshot { get; set; }
 
-            [JsonProperty("versions")]
+            [JsonPropertyName("versions")]
             public List<string> Versions { get; set; } = new List<string>();
         }
         private const string BMCLAPI_BASE_URL = "https://bmclapi2.bangbang93.com/neoforge";
@@ -1074,7 +1076,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                     response.EnsureSuccessStatusCode();
 
                     string json = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<List<NeoForgeVersionInfo>>(json) ?? new List<NeoForgeVersionInfo>();
+                    return JsonSerializer.Deserialize<List<NeoForgeVersionInfo>>(json) ?? new List<NeoForgeVersionInfo>();
                 }
                 catch (Exception ex)
                 {
@@ -1124,16 +1126,16 @@ namespace Qomicex.Core.Modules.Helpers.Resources
         /// </summary>
         public class NeoForgeVersionInfo
         {
-            [JsonProperty("rawVersion")]
+            [JsonPropertyName("rawVersion")]
             public string RawVersion { get; set; } = string.Empty;
 
-            [JsonProperty("version")]
+            [JsonPropertyName("version")]
             public string Version { get; set; } = string.Empty;
 
-            [JsonProperty("mcversion")]
+            [JsonPropertyName("mcversion")]
             public string MinecraftVersion { get; set; } = string.Empty;
 
-            [JsonProperty("installerPath")]
+            [JsonPropertyName("installerPath")]
             public string InstallerPath { get; set; } = string.Empty;
         }
 
@@ -1218,7 +1220,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                     response.EnsureSuccessStatusCode();
 
                     string json = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<List<OptifineVersionInfo>>(json) ?? new List<OptifineVersionInfo>();
+                    return JsonSerializer.Deserialize<List<OptifineVersionInfo>>(json) ?? new List<OptifineVersionInfo>();
                 }
                 catch (Exception ex)
                 {
@@ -1240,19 +1242,19 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                 "forge": "Forge #2493"
               }
             */
-            [JsonProperty("mcversion")]
+            [JsonPropertyName("mcversion")]
             public string MinecraftVersion { get; set; } = string.Empty;
 
-            [JsonProperty("patch")]
+            [JsonPropertyName("patch")]
             public string Patch { get; set; } = string.Empty;
 
-            [JsonProperty("type")]
+            [JsonPropertyName("type")]
             public string Type { get; set; } = string.Empty;
 
-            [JsonProperty("filename")]
+            [JsonPropertyName("filename")]
             public string Filename { get; set; } = string.Empty;
 
-            [JsonProperty("forge")]
+            [JsonPropertyName("forge")]
             public string Forge { get; set; } = string.Empty;
 
         }
@@ -1319,17 +1321,17 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                     response.EnsureSuccessStatusCode();
 
                     string json = await response.Content.ReadAsStringAsync();
-                    //return JsonConvert.DeserializeObject<List<LiteloaderVersionInfo>>(json) ?? new List<LiteloaderVersionInfo>(); 因为liteloader的API有时候返回单个对象，有时候返回列表，所以需要特殊处理
+                    //return JsonSerializer.Deserialize<List<LiteloaderVersionInfo>>(json) ?? new List<LiteloaderVersionInfo>(); 因为liteloader的API有时候返回单个对象，有时候返回列表，所以需要特殊处理
                     try
                     {
                         // 先尝试按列表解析
-                        var list = JsonConvert.DeserializeObject<List<LiteloaderVersionInfo>>(json);
+                        var list = JsonSerializer.Deserialize<List<LiteloaderVersionInfo>>(json);
                         return list ?? new List<LiteloaderVersionInfo>();
                     }
-                    catch (JsonSerializationException)
+                    catch (JsonException)
                     {
                         // 解析失败则尝试按单个对象解析
-                        var single = JsonConvert.DeserializeObject<LiteloaderVersionInfo>(json);
+                        var single = JsonSerializer.Deserialize<LiteloaderVersionInfo>(json);
                         return single != null ? new List<LiteloaderVersionInfo> { single } : new List<LiteloaderVersionInfo>();
                     }
                 }
@@ -1408,16 +1410,16 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                       "__v": 0
                     }
             */
-            [JsonProperty("mcversion")]
+            [JsonPropertyName("mcversion")]
             public string MinecraftVersion { get; set; } = string.Empty;
 
-            [JsonProperty("hash")]
+            [JsonPropertyName("hash")]
             public string Hash { get; set; } = string.Empty;
 
-            [JsonProperty("type")]
+            [JsonPropertyName("type")]
             public string Type { get; set; } = string.Empty;
 
-            [JsonProperty("version")]
+            [JsonPropertyName("version")]
             public string Version { get; set; } = string.Empty;
 
         }
@@ -1453,7 +1455,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                             return versions;
                         }
 
-                        JArray loaderArray = new();
+                        JsonArray loaderArray = [];
 
                         // 2. 优先尝试按版本端点获取 Loader 列表
                         foreach (var alias in GetMinecraftVersionAliases(minecraftVersion))
@@ -1466,7 +1468,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                             }
 
                             var loaderJson = await loaderResponse.Content.ReadAsStringAsync();
-                            loaderArray = JArray.Parse(loaderJson);
+                            loaderArray = JsonNode.Parse(loaderJson)!.AsArray();
                             if (loaderArray.Count > 0)
                             {
                                 break;
@@ -1479,24 +1481,24 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                             var globalLoaderResponse = await client.GetAsync($"{baseUrl}/loader");
                             globalLoaderResponse.EnsureSuccessStatusCode();
                             var globalLoaderJson = await globalLoaderResponse.Content.ReadAsStringAsync();
-                            var globalLoaderItems = JArray.Parse(globalLoaderJson).Children<JObject>();
+                            var globalLoaderItems = JsonNode.Parse(globalLoaderJson)!.AsArray().OfType<JsonObject>();
 
-                            loaderArray = new JArray(globalLoaderItems.Where(item =>
+                            loaderArray = new JsonArray(globalLoaderItems.Where(item =>
                             {
                                 var hashedVersion = item["hashed"]?["version"]?.ToString();
                                 var intermediaryVersion = item["intermediary"]?["version"]?.ToString();
 
                                 return MatchesMinecraftVersion(hashedVersion ?? string.Empty, minecraftVersion)
                                     || MatchesMinecraftVersion(intermediaryVersion ?? string.Empty, minecraftVersion);
-                            }));
+                            }).ToArray());
                         }
 
                         // 4. 解析 Loader 版本信息
-                        foreach (var item in loaderArray.Children<JObject>())
+                        foreach (var item in loaderArray.OfType<JsonObject>())
                         {
-                            var loaderInfo = item["loader"] as JObject;
-                            var intermediaryInfo = item["intermediary"] as JObject;
-                            var hashedInfo = item["hashed"] as JObject;
+                            var loaderInfo = item["loader"] as JsonObject;
+                            var intermediaryInfo = item["intermediary"] as JsonObject;
+                            var hashedInfo = item["hashed"] as JsonObject;
 
                             if (loaderInfo == null || (intermediaryInfo == null && hashedInfo == null))
                             {

@@ -1,4 +1,3 @@
-using Newtonsoft.Json.Linq;
 using Qomicex.Core.Modules.Helpers;
 using System;
 using System.Collections.Generic;
@@ -6,6 +5,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using static Qomicex.Core.DataModules;
 using static Qomicex.Core.DataModules.DataDetails;
 
@@ -94,13 +95,13 @@ namespace Qomicex.Core.Modules.Launcher
                 paramList.Add("-Dminecraft.launcher.version=23");
 
                 // 解析Json
-                JObject data = JObject.Parse(jsonContent);
+                JsonObject data = JsonNode.Parse(jsonContent)!.AsObject();
                 if (data == null)
                 {
                     throw new FileLoadException("Invalid Json file");
                 }
 
-                if (data.TryGetValue("inheritsFrom", out JToken? inheritsFromToken))
+                if (data.TryGetPropertyValue("inheritsFrom", out JsonNode? inheritsFromToken))
                 {
                     inheritsFrom = inheritsFromToken.ToString();
                 }
@@ -161,7 +162,7 @@ namespace Qomicex.Core.Modules.Launcher
                         if (!string.IsNullOrEmpty(inheritJsonContent))
                         {
                             // 如果有继承版本，则获取继承版本的mainClass
-                            var inheritMainClass = JObject.Parse(inheritJsonContent)["mainClass"]?.ToString() ?? throw new Exception("无法找到MainClass");
+                            var inheritMainClass = JsonNode.Parse(inheritJsonContent)!.AsObject()["mainClass"]?.ToString() ?? throw new Exception("无法找到MainClass");
                             if (!string.IsNullOrEmpty(inheritMainClass))
                             {
                                 paramList.Add(inheritMainClass);
@@ -196,14 +197,14 @@ namespace Qomicex.Core.Modules.Launcher
                 string accessToken = string.Empty;
 
                 // 获取 assetIndex
-                if (JObject.Parse(jsonContent).ContainsKey("assetIndex"))
+                if (JsonNode.Parse(jsonContent)!.AsObject().ContainsKey("assetIndex"))
                 {
-                    var assetIndexObj = data["assetIndex"] as JObject;
+                    var assetIndexObj = data["assetIndex"] as JsonObject;
                     assetsIndex = assetIndexObj?["id"]?.ToString() ?? string.Empty;
                 }
-                else if (JObject.Parse(inheritJsonContent).ContainsKey("assetIndex"))
+                else if (JsonNode.Parse(inheritJsonContent)!.AsObject().ContainsKey("assetIndex"))
                 {
-                    var assetIndexObj = JObject.Parse(inheritJsonContent)["assetIndex"] as JObject;
+                    var assetIndexObj = JsonNode.Parse(inheritJsonContent)!["assetIndex"] as JsonObject;
                     assetsIndex = assetIndexObj?["id"]?.ToString() ?? string.Empty;
                 }
 
@@ -321,7 +322,7 @@ namespace Qomicex.Core.Modules.Launcher
         private List<string> GetJVMParams(string jsonData)
         {
             var paramList = new List<string>();
-            JObject datas = JObject.Parse(jsonData);
+            JsonObject datas = JsonNode.Parse(jsonData)!.AsObject();
             if (datas == null)
             {
                 throw new FileLoadException("Invalid Json file");
@@ -331,42 +332,42 @@ namespace Qomicex.Core.Modules.Launcher
             if (datas.ContainsKey("arguments"))
             {
                 //arguments存在
-                var data = (JObject)datas["arguments"]!;
+                var data = datas["arguments"]!.AsObject();
                 if (data.ContainsKey("jvm"))
                 {
                     //jvm存在
-                    JArray? jvmList = data["jvm"]! as JArray;
+                    JsonArray? jvmList = data["jvm"]! as JsonArray;
                     foreach (var item in jvmList!)
                     {
                         //检查参数
                         string value = string.Empty;
                         bool rulesSuitable = false;
 
-                        if (item.Type == JTokenType.Object) // 处理对象项
+                        if (item is JsonObject) // 处理对象项
                         {
                             // 解析 "rules"
-                            var obj = (JObject?)item;
-                            rulesSuitable = Helpers.Resources.LocalResourceHelper.CheckRules(obj!);
+                            JsonObject obj = (JsonObject)item!;
+                            rulesSuitable = Helpers.Resources.LocalResourceHelper.CheckRules(obj);
 
                             // 解析 "value"
-                            if (obj!.ContainsKey("value"))
+                            if (obj.ContainsKey("value"))
                             {
                                 var valToken = obj["value"];
 
-                                if (valToken!.Type == JTokenType.String)
+                                if (valToken is JsonValue jv && jv.TryGetValue(out string? _))
                                 {
                                     value = valToken.ToString();
                                 }
-                                else if (valToken.Type == JTokenType.Array)
+                                else if (valToken is JsonArray valArray)
                                 {
-                                    foreach (var subVal in valToken)
+                                    foreach (var subVal in valArray)
                                     {
                                         value += $"{subVal.ToString()} ";
                                     }
                                 }
                             }
                         }
-                        else if (item.Type == JTokenType.String) // 处理独立字符串项
+                        else if (item is JsonValue jvItem && jvItem.TryGetValue(out string? _)) // 处理独立字符串项
                         {
                             rulesSuitable = true;
                             value = item.ToString();
@@ -408,7 +409,7 @@ namespace Qomicex.Core.Modules.Launcher
         private List<string> GetGameParams(string jsonData)
         {
             var list = new List<string>();
-            JObject datas = JObject.Parse(jsonData);
+            JsonObject datas = JsonNode.Parse(jsonData)!.AsObject();
             if (datas == null)
             {
                 throw new FileLoadException("Invalid Json file");
@@ -417,14 +418,14 @@ namespace Qomicex.Core.Modules.Launcher
             //获取game参数
             if (datas.ContainsKey("arguments"))
             {
-                var data = (JObject)datas["arguments"]!;
+                var data = datas["arguments"]!.AsObject();
                 if (data!.ContainsKey("game"))
                 {
-                    JArray? gameList = data["game"] as JArray;
+                    JsonArray? gameList = data["game"] as JsonArray;
                     foreach (var item in gameList!)
                     {
                         //检查参数
-                        if (item.Type == JTokenType.String) // 处理独立字符串项
+                        if (item is JsonValue jv && jv.TryGetValue(out string? _)) // 处理独立字符串项
                         {
                             list.Add(item.ToString());
                         }
@@ -447,7 +448,7 @@ namespace Qomicex.Core.Modules.Launcher
             try
             {
                 string jsonContent = File.ReadAllText(jsonPath);
-                var json = JObject.Parse(jsonContent);
+                var json = JsonNode.Parse(jsonContent)!.AsObject();
 
                 // 创建Natives目录
                 string versionName = Path.GetFileName(versionPath);
@@ -463,7 +464,7 @@ namespace Qomicex.Core.Modules.Launcher
                 if (json.ContainsKey("inheritsFrom"))
                 {
                     string inheritsFrom = string.Empty;
-                    if (json.TryGetValue("inheritsFrom", out JToken? inheritsFromToken))
+                    if (json.TryGetPropertyValue("inheritsFrom", out JsonNode? inheritsFromToken))
                     {
                         inheritsFrom = inheritsFromToken.ToString();
                     }
@@ -545,30 +546,30 @@ namespace Qomicex.Core.Modules.Launcher
         /// <summary>
         /// 从版本JSON的JVM参数中解析 java.library.path 的实际路径
         /// </summary>
-        private static string ParseJavaLibraryPath(JObject json, string nativesDir)
+        private static string ParseJavaLibraryPath(JsonObject json, string nativesDir)
         {
             try
             {
-                if (json.TryGetValue("arguments", out JToken? argsToken) && argsToken is JObject argsObj
-                    && argsObj.TryGetValue("jvm", out JToken? jvmToken) && jvmToken is JArray jvmArray)
+                if (json.TryGetPropertyValue("arguments", out JsonNode? argsToken) && argsToken is JsonObject argsObj
+                    && argsObj.TryGetPropertyValue("jvm", out JsonNode? jvmToken) && jvmToken is JsonArray jvmArray)
                 {
                     foreach (var item in jvmArray)
                     {
                         string value = string.Empty;
-                        if (item.Type == JTokenType.Object && item is JObject obj)
+                        if (item is JsonObject obj)
                         {
-                            if (obj.TryGetValue("value", out JToken? valToken))
+                            if (obj.TryGetPropertyValue("value", out JsonNode? valToken))
                             {
-                                if (valToken.Type == JTokenType.String)
+                                if (valToken is JsonValue jv && jv.TryGetValue(out string? _))
                                     value = valToken.ToString();
-                                else if (valToken.Type == JTokenType.Array)
+                                else if (valToken is JsonArray valArray)
                                 {
-                                    foreach (var sub in valToken)
+                                    foreach (var sub in valArray)
                                         value += sub.ToString() + " ";
                                 }
                             }
                         }
-                        else if (item.Type == JTokenType.String)
+                        else if (item is JsonValue jv && jv.TryGetValue(out string? _))
                         {
                             value = item.ToString();
                         }

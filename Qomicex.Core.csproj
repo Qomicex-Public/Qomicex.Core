@@ -4,6 +4,7 @@
 		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -13,7 +14,6 @@
 
 	<ItemGroup>
 		<PackageReference Include="DnsClient" Version="1.8.0" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.5-beta1" />
 		<PackageReference Include="Tomlyn" Version="0.17.0" />
 		<PackageReference Include="SkiaSharp" Version="2.88.7" />
 	</ItemGroup>
@@ -45,7 +45,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Qomicex.Downloader\Qomicex.Downloader.csproj" />
+		<ProjectReference Include="Qomicex.Downloader\Qomicex.Downloader.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -1,8 +1,9 @@
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Text.Json.Nodes;
+using Qomicex.Core.Common;
 
 namespace Qomicex.Core.Modules.Helpers.Installers
 {
@@ -22,16 +23,11 @@ namespace Qomicex.Core.Modules.Helpers.Installers
         {
             try
             {
-                JObject MainJson = JObject.Parse(MainVersionJson);
-                JObject MergedJson = JObject.Parse(MergedVersionJson);
+                JsonObject MainJson = JsonNode.Parse(MainVersionJson)!.AsObject();
+                JsonObject MergedJson = JsonNode.Parse(MergedVersionJson)!.AsObject();
 
-                MainJson.Merge(MergedJson, new JsonMergeSettings
-                {
-                    MergeArrayHandling = MergeArrayHandling.Union, // 去重合并数组
-                    MergeNullValueHandling = MergeNullValueHandling.Ignore, // 忽略 null
-                    PropertyNameComparison = StringComparison.OrdinalIgnoreCase, // 属性名不区分大小写
-                });
-                return MainJson.ToString();
+                JsonNodeExtensions.Merge(MainJson, MergedJson, Common.MergeArrayHandling.Union, Common.MergeNullValueHandling.Ignore, StringComparison.OrdinalIgnoreCase);
+                return MainJson.ToJsonString();
             }
             catch
             {
@@ -68,17 +64,17 @@ namespace Qomicex.Core.Modules.Helpers.Installers
 
         internal string MergeVersionJson(string MainVersionJson, string MergedVersionJson, string? DefaultVersionID)
         {
-            var mainVersionObj = JObject.Parse(MainVersionJson);
+            var mainVersionObj = JsonNode.Parse(MainVersionJson)!.AsObject();
 
             var JsonData = MergeJson(MainVersionJson, MergedVersionJson);
-            var Json = JObject.Parse(JsonData);
-            Json["id"] = mainVersionObj["id"];
+            var Json = JsonNode.Parse(JsonData)!.AsObject();
+            Json["id"] = mainVersionObj["id"]?.DeepClone();
             Json.Remove("inheritsFrom");
             if (!string.IsNullOrEmpty(DefaultVersionID))
             {
                 Json["id"] = DefaultVersionID;
             }
-            JsonData = Json.ToString();
+            JsonData = Json.ToJsonString();
             return JsonData;
         }
 
@@ -120,10 +116,10 @@ namespace Qomicex.Core.Modules.Helpers.Installers
 
                 // 合并JSON并修改字段
                 string mergedJsonResult = MergeJson(mainJsonContent, mergedJsonContent);
-                JObject jsonObj = JObject.Parse(mergedJsonResult);
+                JsonObject jsonObj = JsonNode.Parse(mergedJsonResult)!.AsObject();
                 jsonObj["id"] = MainVersion;
                 jsonObj.Remove("inheritsFrom");
-                string finalJsonContent = jsonObj.ToString();
+                string finalJsonContent = jsonObj.ToJsonString();
 
                 MergeDirectories(mergedVersionDir, mainVersionDir);
 

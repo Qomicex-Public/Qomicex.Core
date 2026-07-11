@@ -1,4 +1,5 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
+using System.Text.Json;
 using Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge;
 using Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth;
 using System;
@@ -50,7 +51,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
             return entries;
         }
 
-        private static JObject? ReadMcmetaFromZip(string zipPath)
+        private static JsonObject? ReadMcmetaFromZip(string zipPath)
         {
             var bytes = TryReadFileFromZip(zipPath, "pack.mcmeta");
             if (bytes == null)
@@ -59,7 +60,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
             try
             {
                 string jsonContent = Encoding.UTF8.GetString(bytes);
-                return JObject.Parse(jsonContent);
+                return JsonNode.Parse(jsonContent)!.AsObject();
             }
             catch
             {
@@ -67,7 +68,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
             }
         }
 
-        private static JObject? ReadMcmetaFromFolder(string folderPath)
+        private static JsonObject? ReadMcmetaFromFolder(string folderPath)
         {
             string mcmetaPath = Path.Combine(folderPath, "pack.mcmeta");
             if (!File.Exists(mcmetaPath))
@@ -76,7 +77,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
             try
             {
                 string jsonContent = File.ReadAllText(mcmetaPath);
-                return JObject.Parse(jsonContent);
+                return JsonNode.Parse(jsonContent)!.AsObject();
             }
             catch
             {
@@ -159,12 +160,12 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                 Trace.WriteLine($"Fetching datapack: {entry}");
                 bool isDirectory = Directory.Exists(entry);
 
-                JObject? mcmeta = isDirectory
+                JsonObject? mcmeta = isDirectory
                     ? ReadMcmetaFromFolder(entry)
                     : ReadMcmetaFromZip(entry);
 
                 string description = mcmeta?["pack"]?["description"]?.ToString() ?? "";
-                int packFormat = mcmeta?["pack"]?["pack_format"]?.ToObject<int>() ?? 0;
+                int packFormat = mcmeta?["pack"]?["pack_format"]?.GetValue<int>() ?? 0;
 
                 string icon = isDirectory
                     ? ReadIconFromFolder(entry)

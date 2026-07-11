@@ -1,8 +1,9 @@
-using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Qomicex.Core.Modules.Helpers.Account
 {
@@ -39,7 +40,7 @@ namespace Qomicex.Core.Modules.Helpers.Account
             {
                 // 解析 device code
                 Trace.WriteLine("解析Device Code...");
-                var deviceCode = JObject.Parse(result);
+                var deviceCode = JsonNode.Parse(result)!.AsObject();
                 if (deviceCode != null)
                 {
                     var oauthResponse = new OAuthResponse
@@ -47,8 +48,8 @@ namespace Qomicex.Core.Modules.Helpers.Account
                         DeviceCode = deviceCode["device_code"]?.ToString()!,
                         UserCode = deviceCode["user_code"]?.ToString()!,
                         VerificationUri = deviceCode["verification_uri"]?.ToString()!,
-                        ExpiresIn = deviceCode["expires_in"]?.Value<int>() ?? 0,
-                        Interval = deviceCode["interval"]?.Value<int>() ?? 5
+                        ExpiresIn = deviceCode["expires_in"]?.GetValue<int>() ?? 0,
+                        Interval = deviceCode["interval"]?.GetValue<int>() ?? 5
                     };
                     Trace.WriteLine("成功解析 Device Code");
                     return oauthResponse;
@@ -91,8 +92,8 @@ namespace Qomicex.Core.Modules.Helpers.Account
                 return new Dictionary<string, string> { { "status", "pending" } };
             }
 
-            JObject? data = null;
-            try { data = JObject.Parse(result); } catch { /* 非 JSON 响应 */ }
+            JsonObject? data = null;
+            try { data = JsonNode.Parse(result)!.AsObject(); } catch { /* 非 JSON 响应 */ }
             if (data == null)
             {
                 Trace.WriteLine($"无法解析授权响应数据，HTTP 状态: {response.StatusCode}");
@@ -138,9 +139,9 @@ namespace Qomicex.Core.Modules.Helpers.Account
 
             //Xbox Live验证
             Trace.WriteLine("进入 Xbox Live 身份验证步骤...");
-            var payload = new JObject
+            var payload = new JsonObject
             {
-                ["Properties"] = new JObject
+                ["Properties"] = new JsonObject
                 {
                     ["AuthMethod"] = "RPS",
                     ["SiteName"] = "user.auth.xboxlive.com",
@@ -163,7 +164,7 @@ namespace Qomicex.Core.Modules.Helpers.Account
             {
                 Trace.WriteLine("Xbox Live 验证响应成功，解析结果...");
                 var result = await response.Content.ReadAsStringAsync();
-                var xboxObj = JObject.Parse(result);
+                var xboxObj = JsonNode.Parse(result)!.AsObject();
                 if (xboxObj != null)
                 {
                     xboxToken = xboxObj["Token"]?.ToString() ?? string.Empty;
@@ -178,7 +179,7 @@ namespace Qomicex.Core.Modules.Helpers.Account
                 }
                 else
                 {
-                    Trace.WriteLine("无法解析 Xbox Live 验证响应（JObject 为空）");
+                    Trace.WriteLine("无法解析 Xbox Live 验证响应（JsonObject 为空）");
                     throw new Exception("无法解析 Xbox Live 验证响应");
                 }
             }
@@ -191,12 +192,12 @@ namespace Qomicex.Core.Modules.Helpers.Account
 
             //XSTS身份验证
             Trace.WriteLine("进入 XSTS 身份验证步骤...");
-            var xstsPayload = new JObject
+            var xstsPayload = new JsonObject
             {
-                ["Properties"] = new JObject
+                ["Properties"] = new JsonObject
                 {
                     ["SandboxId"] = "RETAIL",
-                    ["UserTokens"] = new JArray(xboxToken)
+                    ["UserTokens"] = new JsonArray(xboxToken)
                 },
                 ["RelyingParty"] = "rp://api.minecraftservices.com/",
                 ["TokenType"] = "JWT"
@@ -209,7 +210,7 @@ namespace Qomicex.Core.Modules.Helpers.Account
             {
                 Trace.WriteLine("XSTS 验证响应成功，解析结果...");
                 var xstsResult = await xstsResponse.Content.ReadAsStringAsync();
-                var xstsObj = JObject.Parse(xstsResult);
+                var xstsObj = JsonNode.Parse(xstsResult)!.AsObject();
                 if (xstsObj != null)
                 {
                     string xstsToken = xstsObj["Token"]?.ToString() ?? string.Empty;
@@ -224,7 +225,7 @@ namespace Qomicex.Core.Modules.Helpers.Account
 
                     //Minecraft身份验证
                     Trace.WriteLine("进入 Minecraft 身份验证步骤...");
-                    var minecraftPayload = new JObject
+                    var minecraftPayload = new JsonObject
                     {
                         ["identityToken"] = $"XBL3.0 x={userHash};{xstsToken}"
                     };
@@ -236,7 +237,7 @@ namespace Qomicex.Core.Modules.Helpers.Account
                     {
                         Trace.WriteLine("Minecraft 验证响应成功，解析 access_token...");
                         var minecraftResult = await minecraftResponse.Content.ReadAsStringAsync();
-                        var minecraftObj = JObject.Parse(minecraftResult);
+                        var minecraftObj = JsonNode.Parse(minecraftResult)!.AsObject();
                         minecraftAccessToken = minecraftObj["access_token"]?.ToString() ?? string.Empty;
 
                         if (string.IsNullOrEmpty(minecraftAccessToken))
@@ -255,10 +256,10 @@ namespace Qomicex.Core.Modules.Helpers.Account
                         if (response.IsSuccessStatusCode)
                         {
                             Trace.WriteLine("游戏所有权请求响应成功，解析结果...");
-                            var itemsObj = JObject.Parse(await response.Content.ReadAsStringAsync());
+                            var itemsObj = JsonNode.Parse(await response.Content.ReadAsStringAsync())!.AsObject();
                             if (itemsObj != null && itemsObj["items"] != null)
                             {
-                                var items = itemsObj["items"] as JArray;
+                                var items = itemsObj["items"] as JsonArray;
                                 if (items == null || items.Count == 0)
                                 {
                                     Trace.WriteLine("游戏所有权响应中无物品数据");
@@ -307,7 +308,7 @@ namespace Qomicex.Core.Modules.Helpers.Account
                 }
                 else
                 {
-                    Trace.WriteLine("无法解析 XSTS 验证响应（JObject 为空）");
+                    Trace.WriteLine("无法解析 XSTS 验证响应（JsonObject 为空）");
                     throw new Exception("无法解析 XSTS 验证响应");
                 }
             }
@@ -327,7 +328,7 @@ namespace Qomicex.Core.Modules.Helpers.Account
             if (response.IsSuccessStatusCode)
             {
                 Trace.WriteLine("账户信息请求响应成功，解析用户数据...");
-                var dataObj = JObject.Parse(await response.Content.ReadAsStringAsync());
+                var dataObj = JsonNode.Parse(await response.Content.ReadAsStringAsync())!.AsObject();
                 if (dataObj != null)
                 {
                     var userInfo = new DataModules.DataDetails.Account();
@@ -347,7 +348,7 @@ namespace Qomicex.Core.Modules.Helpers.Account
                 }
                 else
                 {
-                    Trace.WriteLine("无法解析账户信息响应（JObject 为空）");
+                    Trace.WriteLine("无法解析账户信息响应（JsonObject 为空）");
                     throw new Exception("无法解析用户信息响应");
                 }
             }
@@ -386,7 +387,7 @@ namespace Qomicex.Core.Modules.Helpers.Account
                 Trace.WriteLine("令牌刷新请求响应成功，解析结果...");
                 if (!string.IsNullOrEmpty(result))
                 {
-                    var data = JObject.Parse(result);
+                    var data = JsonNode.Parse(result)!.AsObject();
                     if (data != null)
                     {
                         string err = data["error"]?.ToString() ?? string.Empty;
@@ -412,7 +413,7 @@ namespace Qomicex.Core.Modules.Helpers.Account
                     }
                     else
                     {
-                        Trace.WriteLine("无法解析令牌刷新响应（JObject 为空）");
+                        Trace.WriteLine("无法解析令牌刷新响应（JsonObject 为空）");
                         throw new Exception("无法解析令牌刷新响应");
                     }
                 }

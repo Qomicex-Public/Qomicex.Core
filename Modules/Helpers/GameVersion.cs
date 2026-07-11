@@ -1,4 +1,5 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.Arm;
@@ -195,7 +196,7 @@ internal static class GameVersion
             using var reader = new StreamReader(stream);
             var json = reader.ReadToEnd();
 
-            var obj = JObject.Parse(json);
+            var obj = JsonNode.Parse(json)!.AsObject();
             var id = obj["id"]?.ToString();
             if (string.IsNullOrEmpty(id))
                 return null;

@@ -1,4 +1,5 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -36,13 +37,13 @@ namespace Qomicex.Core.Modules.Helpers
                 throw new FileNotFoundException($"Version file not found: {jsonPath}");
             }
 
-            JObject data = JObject.Parse(jsonContent);
+            JsonObject data = JsonNode.Parse(jsonContent)!.AsObject();
             if (data == null)
             {
                 throw new FileLoadException("Invalid Json file");
             }
 
-            if (!data.TryGetValue("libraries", out var librariesToken) || !(librariesToken is JArray libraries))
+            if (!data.TryGetPropertyValue("libraries", out var librariesToken) || !(librariesToken is JsonArray libraries))
             {
                 throw new Exception("libraries字段不存在或格式错误");
             }
@@ -52,7 +53,7 @@ namespace Qomicex.Core.Modules.Helpers
             {
                 foreach (var library in libraries)
                 {
-                    var obj = library as JObject;
+                    var obj = library as JsonObject;
                     if (obj != null && obj.ContainsKey("name"))
                     {
                         string name = obj["name"]?.ToString().ToLower() ?? string.Empty;
@@ -217,22 +218,22 @@ namespace Qomicex.Core.Modules.Helpers
             //当Libraries字段中没有找到任何mod加载器时，尝试从arguments参数中获取
             if (data.ContainsKey("arguments"))
             {
-                var argData = (JObject)data["arguments"]!;
+                var argData = data["arguments"]!.AsObject();
                 if (argData!.ContainsKey("game"))
                 {
-                    JArray? gameList = argData["game"] as JArray;
+                    JsonArray? gameList = argData["game"] as JsonArray;
 
                     for (int i = 0; i < gameList!.Count; i++)
                     {
                         var item = gameList[i];
-                        if (item.Type == JTokenType.String)
+                        if (item is JsonValue jv && jv.TryGetValue(out string? _))
                         {
                             string value = item.ToString();
                             //识别NeoForge
                             if (value == "--fml.neoForgeVersion")
                             {
                                 // 获取下一个元素作为版本号
-                                if (i + 1 < gameList.Count && gameList[i + 1].Type == JTokenType.String)
+                                    if (i + 1 < gameList.Count && gameList[i + 1] is JsonValue jv1 && jv1.TryGetValue(out string? _))
                                 {
                                     string ver = gameList[i + 1].ToString();
                                     //types.Add($"NeoForge {ver}");
@@ -251,7 +252,7 @@ namespace Qomicex.Core.Modules.Helpers
                                 if (!(NeoForgeFound || ForgeFound) && mainClass == "cpw.mods.bootstraplauncher.bootstraplauncher")
                                 {
                                     // 获取下一个元素作为版本号
-                                    if (i + 1 < gameList.Count && gameList[i + 1].Type == JTokenType.String)
+                                    if (i + 1 < gameList.Count && gameList[i + 1] is JsonValue jv2 && jv2.TryGetValue(out string? _))
                                     {
                                         string ver = gameList[i + 1].ToString();
                                         //types.Add($"NeoForge {ver}");
@@ -329,7 +330,7 @@ namespace Qomicex.Core.Modules.Helpers
                 return "Unknown";
 
             var jsonData = File.ReadAllText(jsonPath);
-            var jsonObj = JObject.Parse(jsonData);
+            var jsonObj = JsonNode.Parse(jsonData)!.AsObject();
 
             // inheritsFrom 递归（Fabric / 旧Forge / OptiFine）
             var inheritsFrom = jsonObj["inheritsFrom"]?.ToString();
@@ -337,7 +338,7 @@ namespace Qomicex.Core.Modules.Helpers
                 return GetVanillaVersion(inheritsFrom, GameDir);
 
             // --fml.mcVersion（新版Forge 1.13+ 写在 arguments.game 里）
-            var gameArgs = jsonObj["arguments"]?["game"] as JArray;
+            var gameArgs = jsonObj["arguments"]?["game"] as JsonArray;
             if (gameArgs != null)
             {
                 for (int i = 0; i < gameArgs.Count - 1; i++)
@@ -423,7 +424,7 @@ namespace Qomicex.Core.Modules.Helpers
 
             try
             {
-                JObject data = JObject.Parse(jsonContent);
+                JsonObject data = JsonNode.Parse(jsonContent)!.AsObject();
                 if (data == null)
                 {
                     state.Name = "Error";
@@ -549,7 +550,7 @@ namespace Qomicex.Core.Modules.Helpers
             if (!File.Exists(jsonPath))
                 throw new FileNotFoundException($"Version file not found: {jsonPath}");
             string jsonContent = File.ReadAllText(jsonPath);
-            JObject data = JObject.Parse(jsonContent);
+            JsonObject data = JsonNode.Parse(jsonContent)!.AsObject();
             if (data == null || !data.ContainsKey("javaVersion"))
             {
                 if (data!.ContainsKey("inheritsFrom"))

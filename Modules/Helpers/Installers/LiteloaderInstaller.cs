@@ -1,5 +1,5 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -295,30 +295,30 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                     }
 
                     // 解析JSON
-                    JObject root = JObject.Parse(jsonContent);
+                    JsonObject root = JsonNode.Parse(jsonContent)!.AsObject();
 
                     // 1. 检查顶层versions节点
-                    if (root["versions"] is not JObject versionsObj)
+                    if (root["versions"] is not JsonObject versionsObj)
                     {
                         return null;
                     }
 
                     // 2. 检查目标MC版本节点
-                    if (!versionsObj.TryGetValue(mcVersion, out JToken? mcVersionNode) || mcVersionNode is not JObject mcObj)
+                    if (!versionsObj.TryGetPropertyValue(mcVersion, out JsonNode? mcVersionNode) || mcVersionNode is not JsonObject mcObj)
                     {
                         return null;
                     }
 
                     // 3. 查找LiteLoader版本列表（优先snapshots，再artefacts）
-                    JObject? liteLoaderVersions = null;
+                    JsonObject? liteLoaderVersions = null;
                     foreach (string nodeName in new[] { "snapshots", "artefacts" })
                     {
-                        if (!mcObj.TryGetValue(nodeName, out JToken? node) || node is not JObject nodeObj)
+                        if (!mcObj.TryGetPropertyValue(nodeName, out JsonNode? node) || node is not JsonObject nodeObj)
                         {
                             continue;
                         }
 
-                        if (nodeObj.TryGetValue(LITELOADER_GROUP, out JToken? liteNode) && liteNode is JObject liteObj)
+                        if (nodeObj.TryGetPropertyValue(LITELOADER_GROUP, out JsonNode? liteNode) && liteNode is JsonObject liteObj)
                         {
                             liteLoaderVersions = liteObj;
                             break;
@@ -331,12 +331,12 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                     }
 
                     // 4. 匹配目标LiteLoader版本
-                    JObject? targetVersion = null;
-                    foreach (var prop in liteLoaderVersions.Properties())
+                    JsonObject? targetVersion = null;
+                    foreach (var prop in liteLoaderVersions)
                     {
-                        if (prop.Value is not JObject versionObj) continue;
+                        if (prop.Value is not JsonObject versionObj) continue;
 
-                        string? version = versionObj["version"]?.ToString();
+                        string? version = versionObj["version"]?.GetValue<string>();
                         if (string.Equals(version, liteVersion, StringComparison.Ordinal))
                         {
                             targetVersion = versionObj;
@@ -350,7 +350,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                     }
 
                     // 5. 解析主文件下载地址
-                    string? fileName = targetVersion["file"]?.ToString();
+                    string? fileName = targetVersion["file"]?.GetValue<string>();
                     if (string.IsNullOrEmpty(fileName))
                     {
                         return null;
@@ -361,16 +361,16 @@ namespace Qomicex.Core.Modules.Helpers.Installers
 
                     // 6. 解析依赖库
                     List<Library> libraries = new List<Library>();
-                    if (targetVersion.TryGetValue("libraries", out JToken? libsNode) && libsNode is JArray libsArray)
+                    if (targetVersion.TryGetPropertyValue("libraries", out JsonNode? libsNode) && libsNode is JsonArray libsArray)
                     {
                         foreach (var libItem in libsArray)
                         {
-                            if (libItem is not JObject libObj)
+                            if (libItem is not JsonObject libObj)
                             {
                                 continue;
                             }
 
-                            string? libName = libObj["name"]?.ToString();
+                            string? libName = libObj["name"]?.GetValue<string>();
                             if (string.IsNullOrEmpty(libName))
                             {
                                 continue;
@@ -384,7 +384,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                             }
 
                             // 确定库下载地址
-                            string libUrl = libObj["url"]?.ToString() ?? _baseRepoUrl;
+                            string libUrl = libObj["url"]?.GetValue<string>() ?? _baseRepoUrl;
                             // 官方源特殊处理：launchwrapper等库需从Sponge仓库下载
                             if (downloadSource == (int)DownloadSource.Official && string.IsNullOrEmpty((string?)libObj["url"]))
                             {
@@ -411,7 +411,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                     }
 
                     // 7. 解析TweakClass
-                    string tweakClass = targetVersion["tweakClass"]?.ToString() ?? "com.mumfrey.liteloader.launch.LiteLoaderTweaker";
+                    string tweakClass = targetVersion["tweakClass"]?.GetValue<string>() ?? "com.mumfrey.liteloader.launch.LiteLoaderTweaker";
 
                     // 8. 返回完整版本信息
                     var remoteVersion = new LiteLoaderRemoteVersion(
@@ -568,17 +568,17 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                 }
 
                 // 构建LiteLoader版本JSON结构
-                var liteJson = new JObject
+                var liteJson = new JsonObject
                 {
                     ["id"] = versionId,
                     ["inheritsFrom"] = baseVersion.Id,
                     ["type"] = "release",
-                    ["arguments"] = new JObject
+                    ["arguments"] = new JsonObject
                     {
-                        ["game"] = new JArray("--tweakClass", remoteVersion.TweakClass ?? "com.mumfrey.liteloader.launch.LiteLoaderTweaker")
+                        ["game"] = new JsonArray("--tweakClass", remoteVersion.TweakClass ?? "com.mumfrey.liteloader.launch.LiteLoaderTweaker")
                     },
                     ["mainClass"] = "net.minecraft.launchwrapper.Launch",
-                    ["libraries"] = JArray.FromObject(libraries.Select(lib => new
+                    ["libraries"] = new JsonArray(libraries.Select(lib => JsonSerializer.SerializeToNode(new
                     {
                         name = lib.Artifact?.ToString(),
                         url = lib.Url,
@@ -590,12 +590,12 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                                 url = lib.DownloadInfo?.Url
                             }
                         }
-                    })),
-                    ["logging"] = new JObject()
+                    })).ToArray()),
+                    ["logging"] = new JsonObject()
                 };
 
                 // 转换为JSON字符串
-                string liteJsonStr = liteJson.ToString(Formatting.Indented);
+                string liteJsonStr = liteJson.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
 
                 // 合并基础版本配置
                 string mergedJson = base.MergeVersionJson(baseVersion.ToJson(), liteJsonStr, versionId);

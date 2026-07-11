@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 
 namespace Qomicex.Core.Modules.Helpers.Resources
 {
@@ -119,7 +119,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
             try
             {
                 var json = await _httpClient.GetStringAsync(BuildAdoptiumUrl(majorVersion));
-                var assets = JArray.Parse(json);
+                var assets = JsonNode.Parse(json)!.AsArray();
                 var matched = assets.FirstOrDefault(asset => IsMatchingAdoptiumBinary(asset, platform, architecture, packageType));
                 return matched is null
                     ? null
@@ -132,7 +132,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
         }
 
         private static bool IsMatchingAdoptiumBinary(
-            JToken asset,
+            JsonNode asset,
             JavaPlatform platform,
             JavaArchitecture architecture,
             JavaPackageType packageType)
@@ -144,7 +144,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
         }
 
         private static JavaPackageInfo ToAdoptiumPackageInfo(
-            JToken asset,
+            JsonNode asset,
             int majorVersion,
             JavaPlatform platform,
             JavaArchitecture architecture,
@@ -162,7 +162,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                 FileName = asset["binary"]?["package"]?["name"]?.ToString() ?? string.Empty,
                 DownloadUrl = asset["binary"]?["package"]?["link"]?.ToString() ?? string.Empty,
                 Sha256 = asset["binary"]?["package"]?["checksum"]?.ToString() ?? string.Empty,
-                Size = asset["binary"]?["package"]?["size"]?.Value<long?>()
+                Size = asset["binary"]?["package"]?["size"]?.GetValue<long>()
             };
         }
 
@@ -280,19 +280,19 @@ namespace Qomicex.Core.Modules.Helpers.Resources
             JavaArchitecture architecture,
             JavaPackageType packageType)
         {
-            var packages = JArray.Parse(json);
+            var packages = JsonNode.Parse(json)!.AsArray();
             var matched = packages
                 .Where(package => IsMatchingZuluPackage(package, platform) && HasZuluOrderingFields(package))
-                .OrderByDescending(package => ToComparableVersion(package["java_version"] as JArray))
-                .ThenByDescending(package => ToComparableVersion(package["distro_version"] as JArray))
-                .ThenByDescending(package => package["openjdk_build_number"]?.Value<int?>() ?? int.MinValue)
+                .OrderByDescending(package => ToComparableVersion(package["java_version"] as JsonArray))
+                .ThenByDescending(package => ToComparableVersion(package["distro_version"] as JsonArray))
+                .ThenByDescending(package => package["openjdk_build_number"]?.GetValue<int>() ?? int.MinValue)
                 .FirstOrDefault();
             if (matched is null)
             {
                 return null;
             }
 
-            var javaVersion = matched["java_version"] is JArray versionParts
+            var javaVersion = matched["java_version"] is JsonArray versionParts
                 ? string.Join('.', versionParts.Select(part => part.ToString()))
                 : string.Empty;
 
@@ -312,7 +312,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
             };
         }
 
-        private static bool IsMatchingZuluPackage(JToken package, JavaPlatform platform)
+        private static bool IsMatchingZuluPackage(JsonNode package, JavaPlatform platform)
         {
             var fileName = package["name"]?.ToString();
             if (!IsPortablePackage(fileName, platform))
@@ -326,21 +326,21 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                 && !lower.Contains("_musl_", StringComparison.Ordinal);
         }
 
-        private static bool HasZuluOrderingFields(JToken package)
+        private static bool HasZuluOrderingFields(JsonNode package)
         {
-            return package["java_version"] is JArray { Count: > 0 }
-                && package["distro_version"] is JArray { Count: > 0 }
+            return package["java_version"] is JsonArray { Count: > 0 }
+                && package["distro_version"] is JsonArray { Count: > 0 }
                 && !string.IsNullOrWhiteSpace(package["download_url"]?.ToString());
         }
 
-        private static string ToComparableVersion(JArray? versionParts)
+        private static string ToComparableVersion(JsonArray? versionParts)
         {
             if (versionParts is null || versionParts.Count == 0)
             {
                 return string.Empty;
             }
 
-            return string.Join('.', versionParts.Select(part => $"{part.Value<int>():D8}"));
+            return string.Join('.', versionParts.Select(part => $"{part.GetValue<int>():D8}"));
         }
 
         private static string BuildBmclapiUrl(int majorVersion)
@@ -392,11 +392,11 @@ namespace Qomicex.Core.Modules.Helpers.Resources
             _ = architecture;
             _ = packageType;
 
-            var token = JToken.Parse(json);
-            var packages = token.Type switch
+            var token = JsonNode.Parse(json)!;
+            var packages = token switch
             {
-                JTokenType.Array => token as JArray,
-                JTokenType.Object => token["body"] as JArray,
+                JsonArray arr => arr,
+                JsonObject obj => obj["body"] as JsonArray,
                 _ => null
             };
 

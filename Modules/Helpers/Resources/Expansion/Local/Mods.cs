@@ -1,5 +1,5 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using System.Text.Json.Nodes;
+using System.Text.Json;
 using Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge;
 using Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth;
 using System;
@@ -50,14 +50,17 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
             return files;
         }
 
-        private static string[] ExtractFabricAuthors(JToken authorsToken)
+        private static string[] ExtractFabricAuthors(JsonNode authorsToken)
         {
             if (authorsToken == null)
                 return Array.Empty<string>();
 
-            return authorsToken.Select(a =>
+            if (authorsToken is not JsonArray arr)
+                return Array.Empty<string>();
+
+            return arr.Select(a =>
             {
-                if (a is JObject obj && obj["name"] != null)
+                if (a is JsonObject obj && obj["name"] != null)
                     return obj["name"]!.ToString();
                 return a.ToString();
             }).ToArray();
@@ -114,7 +117,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                     string? fabricContent = ReadZipEntry(archive, "fabric.mod.json");
                     if (fabricContent != null)
                     {
-                        JObject json = JObject.Parse(fabricContent);
+                        JsonObject json = JsonNode.Parse(fabricContent)!.AsObject();
                         modInfo.Name = json["name"]?.ToString() ?? "Unknown";
                         modInfo.Version = json["version"]?.ToString() ?? "";
                         modInfo.Description = json["description"]?.ToString() ?? "No description available";
@@ -164,16 +167,16 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                             string? mcmodContent = ReadZipEntry(archive, "mcmod.info");
                             if (mcmodContent != null)
                             {
-                                var mcmodArray = JArray.Parse(mcmodContent);
+                                var mcmodArray = JsonNode.Parse(mcmodContent)!.AsArray();
                                 if (mcmodArray.Count > 0)
                                 {
-                                    var firstEntry = (JObject)mcmodArray[0];
+                                    var firstEntry = mcmodArray[0]!.AsObject();
                                     modInfo.Name = firstEntry["name"]?.ToString() ?? "Unknown";
                                     modInfo.Description = firstEntry["description"]?.ToString() ?? "";
                                     modInfo.Version = firstEntry["version"]?.ToString() ?? "";
-                                    if (firstEntry["authors"] is JArray authorsArray)
+                                    if (firstEntry["authors"] is JsonArray authorsArray)
                                         modInfo.Authors = authorsArray.Select(a => a.ToString()).ToArray();
-                                    else if (firstEntry["authors"]?.Type == JTokenType.String)
+                                    else if (firstEntry["authors"] is JsonValue jv && jv.TryGetValue(out string? _))
                                         modInfo.Authors = firstEntry["authors"]!.ToString().Split(',').Select(a => a.Trim()).ToArray();
                                 }
                             }

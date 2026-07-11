@@ -1,9 +1,10 @@
-using Newtonsoft.Json.Linq;
 using Qomicex.Core.Modules.Helpers.Resources;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Qomicex.Core.Modules.Helpers.Installers
 {
@@ -74,7 +75,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                 throw new Exception("读取NeoForge安装器内容失败，请检查安装器文件是否正确", ex);
             }
 
-            var installProfileJson = JObject.Parse(installProfileData!);
+            var installProfileJson = JsonNode.Parse(installProfileData!)!.AsObject();
             string profileName = installProfileJson["profile"]?.ToString().ToLower() ?? string.Empty;
             if (profileName != "neoforge" && !(gameVersion == "1.20.1" && profileName == "forge"))
             {
@@ -82,10 +83,10 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             }
 
             // 修改 version.json
-            var versionData = JObject.Parse(jsonData!);
+            var versionData = JsonNode.Parse(jsonData!)!.AsObject();
             versionData["id"] = versionId;
             versionData["inheritsFrom"] = this.gameVersion;
-            jsonData = versionData.ToString();
+            jsonData = versionData.ToJsonString();
 
             // 合并版本 JSON
             if (!string.IsNullOrEmpty(inheritsFromJson))
@@ -159,12 +160,12 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             }
 
             // 执行 processors
-            var processors = installProfileJson["processors"] as JArray;
+            var processors = installProfileJson["processors"] as JsonArray;
             if (processors != null && processors.Count > 0)
             {
                 foreach (var processor in processors)
                 {
-                    var processorObject = (JObject)processor;
+                    var processorObject = processor!.AsObject();
                     if (!ShouldRunProcessor(processorObject, "client"))
                     {
                         continue;
@@ -209,7 +210,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             // 获取缺失 libs
             var libs = LocalResourceHelper.GetLibraries(installProfileData!);
             libs.AddRange(LocalResourceHelper.GetLibraries(versionData!));
-            foreach (var coordinate in ExtractMavenCoordinatesFromProcessors(JObject.Parse(installProfileData!)))
+            foreach (var coordinate in ExtractMavenCoordinatesFromProcessors(JsonNode.Parse(installProfileData!)!.AsObject()))
             {
                 libs.Add(new LocalResourceHelper.LibInfo { FullName = coordinate });
             }

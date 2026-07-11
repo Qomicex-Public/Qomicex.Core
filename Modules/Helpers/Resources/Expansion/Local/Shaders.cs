@@ -1,4 +1,3 @@
-using Newtonsoft.Json.Linq;
 using Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge;
 using Qomicex.Core.Modules.Helpers.Resources.Expansion.Modrinth;
 using System;

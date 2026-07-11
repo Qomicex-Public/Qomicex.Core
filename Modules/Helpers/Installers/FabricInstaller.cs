@@ -1,5 +1,3 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Qomicex.Core.Modules.Helpers.Resources;
 using System;
 using System.Collections.Generic;
@@ -8,6 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
 namespace Qomicex.Core.Modules.Helpers.Installers
@@ -105,11 +105,11 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                 {
                     throw new Exception("获取Launcher Meta失败");
                 }
-                var meta = JObject.Parse(metaStr);
+                var meta = JsonNode.Parse(metaStr)!.AsObject();
 
 
                 // 下载 libraries
-                var libs = meta["libraries"] as JArray;
+                var libs = meta["libraries"] as JsonArray;
                 if (libs != null)
                 {
                     foreach (var lib in libs)
@@ -130,7 +130,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
 
                 meta["id"] = versionId;
 
-                return meta.ToString(Formatting.Indented);
+                return meta.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
             }
             catch (Exception ex)
             {
@@ -157,9 +157,9 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                 {
                     throw new Exception("获取Launcher Meta失败");
                 }
-                var meta = JObject.Parse(metaStr);
+                var meta = JsonNode.Parse(metaStr)!.AsObject();
 
-                var libs = meta["libraries"] as JArray;
+                var libs = meta["libraries"] as JsonArray;
                 if (libs != null)
                 {
                     foreach (var lib in libs)

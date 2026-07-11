@@ -1,4 +1,5 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
+using System.Text.Json;
 using System;
 using System.Buffers.Text;
 using System.Collections.Generic;
@@ -24,7 +25,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
         }
 
 
-        internal async Task RunProcessor(JObject ipObj, JObject processor, string versionId, string gameDir, string javaPath)
+        internal async Task RunProcessor(JsonObject ipObj, JsonObject processor, string versionId, string gameDir, string javaPath)
         {
             if (processor == null)
             {
@@ -96,7 +97,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             //构造classpath
             Trace.WriteLine("构造Processor执行的classpath");
             string cps = string.Empty;
-            var classpathArr = processor["classpath"] as JArray;
+            var classpathArr = processor["classpath"] as JsonArray;
             if (classpathArr == null || classpathArr.Count == 0)
             {
                 Trace.WriteLine("Processor的classpath为空");
@@ -138,7 +139,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             //构造arguments
             Trace.WriteLine("构造Processor执行参数");
             string args = string.Empty;
-            var argsArr = processor["args"] as JArray;
+            var argsArr = processor["args"] as JsonArray;
             if (argsArr != null && argsArr.Count > 0)
             {
                 foreach (var arg in argsArr)
@@ -234,7 +235,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             return Path.Combine(this.gameDir, "libraries", libMavenPath.Replace('/', Path.DirectorySeparatorChar));
         }
 
-        internal Dictionary<string, string> ReplaceOutputs(JObject ipObj, JObject processor, string gameDir)
+        internal Dictionary<string, string> ReplaceOutputs(JsonObject ipObj, JsonObject processor, string gameDir)
         {
             Trace.WriteLine("解析并替换Processor输出文件路径");
             var outputs = new Dictionary<string, string>();
@@ -244,11 +245,10 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                 Trace.WriteLine("Processor的outputs节点为空，返回空字典");
                 return outputs;
             }
-            foreach (var output in processor["outputs"]!)
-            {
-                var prop = (JProperty)output;
-                string key = prop.Name;
-                string value = prop.Value!.ToString();
+                foreach (var output in processor["outputs"]!.AsObject())
+                {
+                    string key = output.Key;
+                    string value = output.Value!.ToString();
                 Trace.WriteLine($"原始输出配置: {key}={value}");
 
                 string replacedStr = ReplaceArguments(ipObj, $"{key}={value}");
@@ -266,14 +266,14 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             return outputs;
         }
 
-        internal string ReplaceArguments(JObject ipObj, string args)
+        internal string ReplaceArguments(JsonObject ipObj, string args)
         {
             Trace.WriteLine($"替换前的参数: {args}");
 
             //替换data节点中的变量
             if (ipObj["data"] != null)
             {
-                var dataObj = (JObject)ipObj["data"]!;
+                var dataObj = ipObj["data"]!.AsObject();
                 foreach (var prop in dataObj)
                 {
                     var name = prop.Key;
@@ -360,18 +360,18 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             return result;
         }
 
-        internal List<string> ExtractMavenCoordinatesFromProcessors(JObject installProfileJson)
+        internal List<string> ExtractMavenCoordinatesFromProcessors(JsonObject installProfileJson)
         {
             var coordinates = new List<string>();
-            var processors = installProfileJson["processors"] as JArray;
+            var processors = installProfileJson["processors"] as JsonArray;
             if (processors == null)
             {
                 return coordinates;
             }
 
-            foreach (var processor in processors.OfType<JObject>())
+            foreach (var processor in processors.OfType<JsonObject>())
             {
-                var args = processor["args"] as JArray;
+                var args = processor["args"] as JsonArray;
                 if (args == null)
                 {
                     continue;
@@ -399,9 +399,9 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             return coordinates;
         }
 
-        internal bool ShouldRunProcessor(JObject processor, string side)
+        internal bool ShouldRunProcessor(JsonObject processor, string side)
         {
-            var sides = processor["sides"] as JArray;
+            var sides = processor["sides"] as JsonArray;
             if (sides == null || sides.Count == 0)
             {
                 return true;

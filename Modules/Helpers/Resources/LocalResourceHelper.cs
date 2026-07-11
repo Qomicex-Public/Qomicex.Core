@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,7 +12,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
 {
     public class LocalResourceHelper
     {
-        internal static bool CheckRules(JObject obj)
+        internal static bool CheckRules(JsonObject obj)
         {
             bool isSuitable = false;
             string os = string.Empty;
@@ -22,16 +22,16 @@ namespace Qomicex.Core.Modules.Helpers.Resources
 
             if (obj.ContainsKey("rules"))//判断是否适用
             {
-                JArray? rules = (JArray?)obj["rules"];
+                JsonArray? rules = obj["rules"] as JsonArray;
 
                 foreach (var rule in rules!)
                 {
-                    var ruleObj = (JObject)rule;
+                    var ruleObj = rule!.AsObject();
                     string currentArch = RuntimeInformation.OSArchitecture.ToString().ToLower();
                     if (ruleObj["action"]!.ToString() == "allow" || ruleObj["action"] is null) { action = true; } else { action = false; }
                     if (ruleObj.ContainsKey("os"))
                     {
-                        var osObj = (JObject?)ruleObj["os"];
+                        var osObj = ruleObj["os"] as JsonObject;
                         if (osObj!.ContainsKey("name"))
                         {
                             os = osObj["name"]!.ToString();
@@ -62,19 +62,19 @@ namespace Qomicex.Core.Modules.Helpers.Resources
         {
             var libsReturn = new List<LibInfo>();
             var libs = new List<LibInfo>();
-            JObject data = JObject.Parse(jsonData);
+            JsonObject data = JsonNode.Parse(jsonData)!.AsObject();
             if (data == null)
             {
                 throw new FileLoadException("Invalid Json file");
             }
             // 安全获取libraries数组
-            if (!data.TryGetValue("libraries", out var librariesToken) || !(librariesToken is JArray libraries))
+            if (!data.TryGetPropertyValue("libraries", out var librariesToken) || !(librariesToken is JsonArray libraries))
             {
                 throw new Exception("libraries字段不存在或格式错误");
             }
             foreach (var item in libraries)
             {
-                var libObj = (JObject)item;
+                var libObj = item!.AsObject();
                 if (CheckRules(libObj))
                 {
                     if (libObj.ContainsKey("name"))
@@ -140,24 +140,24 @@ namespace Qomicex.Core.Modules.Helpers.Resources
             return groupedLibs.ToList();
         }
 
-        private static bool CheckNatives(JObject obj)
+        private static bool CheckNatives(JsonObject obj)
         {
             if (obj.ContainsKey("natives"))
                 return true;
-            if (obj.ContainsKey("downloads") && ((JObject?)obj["downloads"])!.ContainsKey("classifiers"))
+            if (obj.ContainsKey("downloads") && (obj["downloads"] as JsonObject)!.ContainsKey("classifiers"))
                 return true;
             if (GetNativesInfo(obj, 0).ToLower().Contains("natives"))
                 return true;
             return false;
         }
 
-        private static string GetNativesInfo(JObject obj, int type = 0)
+        private static string GetNativesInfo(JsonObject obj, int type = 0)
         {
             string nativesName = string.Empty;
 
             if (obj.ContainsKey("natives"))
             {
-                var natives = (JObject?)obj["natives"];
+                var natives = obj["natives"] as JsonObject;
                 if (natives != null && natives.ContainsKey(SystemInfoHelper.OsName))
                 {
                     nativesName = natives[SystemInfoHelper.OsName]!.ToString();
@@ -171,13 +171,17 @@ namespace Qomicex.Core.Modules.Helpers.Resources
             {
                 if (obj.ContainsKey("classifiers"))
                 {
-                    var classifiersObj = (JObject?)obj["downloads"]!["classifiers"];
+                    var classifiersObj = obj["downloads"]!["classifiers"] as JsonObject;
                     if (classifiersObj != null && classifiersObj.ContainsKey($"natives-{SystemInfoHelper.OsName}"))
                     {
-                        if (classifiersObj[nativesName]!.Contains("sha1") && type == 1)
-                            return classifiersObj[nativesName]!["sha1"]!.ToString();
-                        if (classifiersObj[nativesName]!.Contains("url") && type == 2)
-                            return classifiersObj[nativesName]!["url"]!.ToString();
+                        var nativesEntry = classifiersObj[nativesName] as JsonObject;
+                        if (nativesEntry != null)
+                        {
+                            if (nativesEntry.ContainsKey("sha1") && type == 1)
+                                return nativesEntry["sha1"]!.ToString();
+                            if (nativesEntry.ContainsKey("url") && type == 2)
+                                return nativesEntry["url"]!.ToString();
+                        }
                     }
                 }
             }
@@ -189,11 +193,11 @@ namespace Qomicex.Core.Modules.Helpers.Resources
             return string.Empty;
         }
 
-        private static bool CheckClassPath(JObject obj)
+        private static bool CheckClassPath(JsonObject obj)
         {
             if (obj.ContainsKey("downloads"))
             {
-                var downloadsObj = obj["downloads"] as JObject;
+                var downloadsObj = obj["downloads"] as JsonObject;
                 if (downloadsObj!.ContainsKey("artifact"))
                     return true;
             }
@@ -208,20 +212,20 @@ namespace Qomicex.Core.Modules.Helpers.Resources
         }
 
 
-        private static string GetClassPathInfo(JObject obj, int type = 0)
+        private static string GetClassPathInfo(JsonObject obj, int type = 0)
         {
             if (obj.ContainsKey("downloads"))
             {
-                var downloadsObj = obj["downloads"] as JObject;
+                var downloadsObj = obj["downloads"] as JsonObject;
                 if (downloadsObj != null && downloadsObj.ContainsKey("artifact"))
                 {
-                    var artifactObj = downloadsObj["artifact"] as JObject;
+                    var artifactObj = downloadsObj["artifact"] as JsonObject;
                     if (artifactObj != null)
                     {
                         if (artifactObj.ContainsKey("sha1") && type == 1)
                             return artifactObj["sha1"]!.ToString();
-                        if (artifactObj!.ContainsKey("url") && type == 2)
-                            return artifactObj!["url"]!.ToString();
+                        if (artifactObj.ContainsKey("url") && type == 2)
+                            return artifactObj["url"]!.ToString();
                     }
                 }
             }
@@ -479,11 +483,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
         {
             string inheritsFrom = string.Empty;
             string JsonContent = await File.ReadAllTextAsync(Path.Combine(gameDir, "versions", ver, $"{ver}.json"));//$"{gameDir}/versions/{ver}/{ver}.json"
-            JObject data = JObject.Parse(JsonContent);
-            if (data == null)
-            {
-                throw new FileLoadException("Invalid Json file");
-            }
+            JsonObject data = JsonNode.Parse(JsonContent)!.AsObject();
             if (data.ContainsKey("inheritsFrom"))
             {
                 inheritsFrom = data["inheritsFrom"]!.ToString();
@@ -627,11 +627,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
         public async Task<MissFileData?> GetMissMainJarFromJsonAsync(string jsonContent, string versionId, string gameDir)
         { 
             MissFileData missMainJar = new MissFileData();
-            JObject data = JObject.Parse(jsonContent);
-            if (data == null)
-            {
-                throw new FileLoadException("Invalid Json file");
-            }
+            JsonObject data = JsonNode.Parse(jsonContent)!.AsObject();
 
             string sha1 = data["downloads"]?["client"]?["sha1"]?.ToString() ?? string.Empty;
             if (!string.IsNullOrEmpty(sha1))
@@ -662,11 +658,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
         {
             MissFileData missMainJar = new MissFileData();
             string JsonContent = await File.ReadAllTextAsync(Path.Combine(gameDir, "versions", version, $"{version}.json")); //$"{gameDir}/versions/{version}/{version}.json"
-            JObject data = JObject.Parse(JsonContent);
-            if (data == null)
-            {
-                throw new FileLoadException("Invalid Json file");
-            }
+            JsonObject data = JsonNode.Parse(JsonContent)!.AsObject();
 
             string sha1 = data["downloads"]?["client"]?["sha1"]?.ToString() ?? string.Empty;
             if (!string.IsNullOrEmpty(sha1))
@@ -728,11 +720,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                 //如果有继承版本，则获取继承版本的主Jar
                 string inheritsFrom = await GetInheritsFrom(version, gameDir);
                 string inheritsJsonContent = await File.ReadAllTextAsync(Path.Combine(gameDir, "versions", inheritsFrom, $"{inheritsFrom}.json"));
-                JObject inheritsData = JObject.Parse(inheritsJsonContent);
-                if (inheritsData == null)
-                {
-                    throw new FileLoadException("Invalid Json file");
-                }
+                JsonObject inheritsData = JsonNode.Parse(inheritsJsonContent)!.AsObject();
                 string inheritsSha1 = inheritsData["downloads"]?["client"]?["sha1"]?.ToString() ?? string.Empty;
                 if (!string.IsNullOrEmpty(inheritsSha1))
                 {
@@ -774,15 +762,11 @@ namespace Qomicex.Core.Modules.Helpers.Resources
         {
             List<MissFileData> missFiles = new List<MissFileData>();
             string JsonContent = await File.ReadAllTextAsync(Path.Combine(gameDir, "versions", version, $"{version}.json"));//$"{gameDir}/versions/{version}/{version}.json"
-            JObject data = JObject.Parse(JsonContent);
-            if (data == null)
-            {
-                throw new FileLoadException("Invalid Json file");
-            }
+            JsonObject data = JsonNode.Parse(JsonContent)!.AsObject();
 
             if (data.ContainsKey("assetIndex"))
             {
-                var assetIndexObj = (JObject)data["assetIndex"]!;
+                var assetIndexObj = data["assetIndex"]!.AsObject();
                 string assetsIndexPath = string.Empty;
                 //检查 assetIndex
                 if (assetIndexObj.ContainsKey("id"))
@@ -824,14 +808,13 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                 if (File.Exists(assetsIndexPath))
                 {
                     string assetsJsonContent = await File.ReadAllTextAsync(assetsIndexPath);
-                    JObject assetsData = JObject.Parse(assetsJsonContent);
+                    JsonObject assetsData = JsonNode.Parse(assetsJsonContent)!.AsObject();
                     if (assetsData.ContainsKey("objects"))
                     {
-                        JObject assetObj = (JObject)assetsData["objects"]!;
-                        foreach (var item in assetObj)
+                        var assetObj = assetsData["objects"]!.AsObject();
+                        foreach (var (assetName, assetDetailsNode) in assetObj)
                         {
-                            string assetName = item.Key;
-                            JObject assetDetails = (JObject)item.Value!;
+                            var assetDetails = assetDetailsNode!.AsObject();
                             string assetHash = assetDetails["hash"]!.ToString();
                             string assetUrl = $"{_downloadSource.assetsSource}{assetHash.Substring(0, 2)}/{assetHash}";
                             string assetPath = Path.Combine(gameDir, "assets", "objects", assetHash.Substring(0, 2), assetHash);
@@ -860,23 +843,19 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                                 missFiles.Add(missFile);
                             }
                         }
-
                     }
                 }
             }
-            if (!string.IsNullOrEmpty(await GetInheritsFrom(version, gameDir)))
+            string? inheritsFrom = await GetInheritsFrom(version, gameDir);
+            if (!string.IsNullOrEmpty(inheritsFrom))
             {
-                var inheritsFromVer = await GetInheritsFrom(version, gameDir);
+                var inheritsFromVer = inheritsFrom;
                 JsonContent = await File.ReadAllTextAsync(Path.Combine(gameDir, "versions", inheritsFromVer, $"{inheritsFromVer}.json"));//$"{gameDir}/versions/{inheritsFromVer}/{inheritsFromVer}.json"
-                data = JObject.Parse(JsonContent);
-                if (data == null)
-                {
-                    throw new FileLoadException("Invalid Json file");
-                }
+                data = JsonNode.Parse(JsonContent)!.AsObject();
 
                 if (data.ContainsKey("assetIndex"))
                 {
-                    var assetIndexObj = (JObject)data["assetIndex"]!;
+                    var assetIndexObj = data["assetIndex"]!.AsObject();
                     string assetsIndexPath = string.Empty;
                     //检查 assetIndex
                     if (assetIndexObj.ContainsKey("id"))
@@ -918,14 +897,13 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                     if (File.Exists(assetsIndexPath))
                     {
                         string assetsJsonContent = await File.ReadAllTextAsync(assetsIndexPath);
-                        JObject assetsData = JObject.Parse(assetsJsonContent);
+                        JsonObject assetsData = JsonNode.Parse(assetsJsonContent)!.AsObject();
                         if (assetsData.ContainsKey("objects"))
                         {
-                            JObject assetObj = (JObject)assetsData["objects"]!;
-                            foreach (var item in assetObj)
+                            var assetObj = assetsData["objects"]!.AsObject();
+                            foreach (var (assetName, assetDetailsNode) in assetObj)
                             {
-                                string assetName = item.Key;
-                                JObject assetDetails = (JObject)item.Value!;
+                                var assetDetails = assetDetailsNode!.AsObject();
                                 string assetHash = assetDetails["hash"]!.ToString();
                                 string assetUrl = $"{_downloadSource.assetsSource}{assetHash.Substring(0, 2)}/{assetHash}";
                                 string assetPath = Path.Combine(gameDir, "assets", "objects", assetHash.Substring(0, 2), assetHash);
@@ -954,7 +932,6 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                                     missFiles.Add(missFile);
                                 }
                             }
-
                         }
                     }
                 }
@@ -965,15 +942,11 @@ namespace Qomicex.Core.Modules.Helpers.Resources
         public async Task<List<MissFileData>> GetMissAssetsFromJsonAsync(string jsonContent, string versionId, string gameDir)
         {
             List<MissFileData> missFiles = new List<MissFileData>();
-            JObject data = JObject.Parse(jsonContent);
-            if (data == null)
-            {
-                throw new FileLoadException("Invalid Json file");
-            }
+            JsonObject data = JsonNode.Parse(jsonContent)!.AsObject();
 
             if (data.ContainsKey("assetIndex"))
             {
-                var assetIndexObj = (JObject)data["assetIndex"]!;
+                var assetIndexObj = data["assetIndex"]!.AsObject();
                 string assetsIndexPath = string.Empty;
                 //检查 assetIndex
                 if (assetIndexObj.ContainsKey("id"))
@@ -1015,14 +988,13 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                 if (File.Exists(assetsIndexPath))
                 {
                     string assetsJsonContent = await File.ReadAllTextAsync(assetsIndexPath);
-                    JObject assetsData = JObject.Parse(assetsJsonContent);
+                    JsonObject assetsData = JsonNode.Parse(assetsJsonContent)!.AsObject();
                     if (assetsData.ContainsKey("objects"))
                     {
-                        JObject assetObj = (JObject)assetsData["objects"]!;
-                        foreach (var item in assetObj)
+                        var assetObj = assetsData["objects"]!.AsObject();
+                        foreach (var (assetName, assetDetailsNode) in assetObj)
                         {
-                            string assetName = item.Key;
-                            JObject assetDetails = (JObject)item.Value!;
+                            var assetDetails = assetDetailsNode!.AsObject();
                             string assetHash = assetDetails["hash"]!.ToString();
                             string assetUrl = $"{_downloadSource.assetsSource}{assetHash.Substring(0, 2)}/{assetHash}";
                             string assetPath = Path.Combine(gameDir, "assets", "objects", assetHash.Substring(0, 2), assetHash);
@@ -1051,7 +1023,6 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                                 missFiles.Add(missFile);
                             }
                         }
-
                     }
                 }
             }

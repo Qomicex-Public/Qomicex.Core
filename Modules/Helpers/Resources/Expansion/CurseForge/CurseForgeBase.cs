@@ -1,5 +1,7 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
+using Qomicex.Core.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -88,7 +90,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
             request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("application/json"));
             request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (compatible; QomicexCore/1.0)");
 
-            var jsonData = JsonConvert.SerializeObject(data);
+            var jsonData = JsonSerializer.Serialize(data);
             request.Content = new StringContent(jsonData, Encoding.UTF8, "application/json");
             var response = await _http.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -112,95 +114,95 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
         }
         public class ScreenshotsMeta
         {
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public int Id { get; set; } = 0;
-            [JsonProperty("modId")]
+            [JsonPropertyName("modId")]
             public int ModId { get; set; } = 0;
-            [JsonProperty("title")]
+            [JsonPropertyName("title")]
             public string Title { get; set; } = string.Empty;
-            [JsonProperty("description")]
+            [JsonPropertyName("description")]
             public string Description { get; set; } = string.Empty;
-            [JsonProperty("thumbnailUrl")]
+            [JsonPropertyName("thumbnailUrl")]
             public string ThumbnailUrl { get; set; } = string.Empty;
-            [JsonProperty("url")]
+            [JsonPropertyName("url")]
             public string Url { get; set; } = string.Empty;
         }
         public class CategoryMeta
         {
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public int Id { get; set; }
-            [JsonProperty("name")]
+            [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
-            [JsonProperty("slug")]
+            [JsonPropertyName("slug")]
             public string Slug { get; set; } = string.Empty;
-            [JsonProperty("url")]
+            [JsonPropertyName("url")]
             public string Url { get; set; } = string.Empty;
         }
         public class AuthorMeta
         {
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public string Id { get; set; } = string.Empty;
-            [JsonProperty("name")]
+            [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
-            [JsonProperty("url")]
+            [JsonPropertyName("url")]
             public string Url { get; set; } = string.Empty;
         }
         public class CurseForgeInfo
         {
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public string Id { get; set; } = string.Empty;
-            [JsonProperty("name")]
+            [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
-            [JsonProperty("slug")]
+            [JsonPropertyName("slug")]
             public string Slug { get; set; } = string.Empty;
-            [JsonProperty("summary")]
+            [JsonPropertyName("summary")]
             public string Summary { get; set; } = string.Empty;
-            [JsonProperty("status")]
+            [JsonPropertyName("status")]
             public int Status { get; set; } = 1;
-            [JsonProperty("downloadCount")]
+            [JsonPropertyName("downloadCount")]
             public int DownloadCount { get; set; } = 0;
-            [JsonProperty("isFeatured")]
+            [JsonPropertyName("isFeatured")]
             public bool IsFeatured { get; set; } = false;
-            [JsonProperty("categories")]
+            [JsonPropertyName("categories")]
             public List<CategoryMeta> Categories { get; set; } = new List<CategoryMeta>();
-            [JsonProperty("iconUrl")]
+            [JsonPropertyName("iconUrl")]
             public string IconUrl { get; set; } = string.Empty;
-            [JsonProperty("authors")]
+            [JsonPropertyName("authors")]
             public List<AuthorMeta> Authors { get; set; } = new List<AuthorMeta>();
-            [JsonProperty("screenshots")]
+            [JsonPropertyName("screenshots")]
             public List<ScreenshotsMeta> Screenshots { get; set; } = new List<ScreenshotsMeta>();
-            [JsonProperty("latestFilesIndexes")]
+            [JsonPropertyName("latestFilesIndexes")]
             public List<CurseForgeFilesMeta> Files { get; set; } = new List<CurseForgeFilesMeta>();
             public List<CurseForgeDependenciesMeta> Dependencies { get; set; } = new List<CurseForgeDependenciesMeta>();
         }
         public class CurseForgeFilesMeta
         {
 
-            [JsonProperty("fileId")]
+            [JsonPropertyName("fileId")]
             public string FileId { get; set; } = string.Empty;
-            [JsonProperty("fileName")]
+            [JsonPropertyName("fileName")]
             public string FileName { get; set; } = string.Empty;
-            [JsonProperty("releaseType")]
+            [JsonPropertyName("releaseType")]
             public int releaseType { get; set; } = 1;
-            [JsonProperty("gameVersion")]
+            [JsonPropertyName("gameVersion")]
             public string GameVersion { get; set; } = string.Empty;
-            [JsonProperty("modLoader")]
+            [JsonPropertyName("modLoader")]
             public int ModLoader { get; set; } = 1;
         }
         public class FingerprintsFilesMeta
         {
-            [JsonProperty("modId")]
+            [JsonPropertyName("modId")]
             public string ModId { get; set; } = string.Empty;
-            [JsonProperty("id")]
+            [JsonPropertyName("id")]
             public string FileId { get; set; } = string.Empty;
-            [JsonProperty("dependencies")]
+            [JsonPropertyName("dependencies")]
             public CurseForgeDependenciesMeta? Dependencies { get; set; }
         }
         public class CurseForgeDependenciesMeta
         {
-            [JsonProperty("modId")]
+            [JsonPropertyName("modId")]
             public int Id { get; set; } = 0;
-            [JsonProperty("relationType")]
+            [JsonPropertyName("relationType")]
             public int Type { get; set; } = 1;
         }
 
@@ -247,16 +249,16 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
             if (!string.IsNullOrEmpty(data))
             {
                 var returnData = new List<CurseForgeSearchResult>();
-                var result = JObject.Parse(data);
+                    var result = JsonNode.Parse(data);
                 if (result != null)
                 {
-                    var mods = result["data"]?.ToArray();
+                    var mods = result["data"] as JsonArray;
                     if (mods != null)
                     {
                         foreach (var mod in mods)
                         {
-                            var modData = (JObject)mod;
-                            var latestFilesIndexes = modData["latestFilesIndexes"]?.ToArray();
+                            var modData = mod!.AsObject();
+                            var latestFilesIndexes = modData["latestFilesIndexes"] as JsonArray;
                             List<string> gameVersionsList = latestFilesIndexes?
                                 .Select(node => node["gameVersion"]?.ToString())
                                 .OfType<string>()
@@ -273,21 +275,26 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
                                 GameVersion = string.Join(", ", gameVersionsList),
                                 DownloadCount = modData["downloadCount"]?.ToString() ?? string.Empty,
                                 IconUrl = modData["logo"]?["url"]?.ToString() ?? string.Empty,
-                                IsFeatured = modData["isFeatured"]?.Value<bool>() ?? false,
-                                Authors = modData["authors"]?.Select(a => new AuthorMeta
+                                IsFeatured = modData["isFeatured"]?.GetValue<bool>() ?? false,
+                                Authors = modData["authors"] is JsonArray authorsArr
+                                    ? authorsArr.Select(a => new AuthorMeta
                                 {
                                     Id = a["id"]?.ToString() ?? string.Empty,
                                     Name = a["name"]?.ToString() ?? string.Empty,
                                     Url = a["url"]?.ToString() ?? string.Empty
-                                }).ToList() ?? new List<AuthorMeta>(),
-                                Categories = modData["categories"]?.Select(c => new CategoryMeta
+                                }).ToList()
+                                    : new List<AuthorMeta>(),
+                                Categories = modData["categories"] is JsonArray categoriesArr
+                                    ? categoriesArr.Select(c => new CategoryMeta
                                 {
                                     Id = (int)c["id"]!,
                                     Name = c["name"]?.ToString() ?? string.Empty,
                                     Slug = c["slug"]?.ToString() ?? string.Empty,
                                     Url = c["url"]?.ToString() ?? string.Empty
-                                }).ToList() ?? new List<CategoryMeta>(),
-                                Screenshots = modData["screenshots"]?.Select(s => new ScreenshotsMeta
+                                }).ToList()
+                                    : new List<CategoryMeta>(),
+                                Screenshots = modData["screenshots"] is JsonArray screenshotsArr
+                                    ? screenshotsArr.Select(s => new ScreenshotsMeta
                                 {
                                     Id = (int)s["id"]!,
                                     ModId = (int)s["modId"]!,
@@ -295,7 +302,8 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
                                     Description = s["description"]?.ToString() ?? string.Empty,
                                     ThumbnailUrl = s["thumbnailUrl"]?.ToString() ?? string.Empty,
                                     Url = s["url"]?.ToString() ?? string.Empty
-                                }).ToList() ?? new List<ScreenshotsMeta>()
+                                }).ToList()
+                                    : new List<ScreenshotsMeta>()
                             };
                             returnData.Add(modResult);
                         }
@@ -324,7 +332,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
             var data = await GetData(url, API_KEY);
             if (!string.IsNullOrEmpty(data))
             {
-                var result = JObject.Parse(data);
+                var result = JsonNode.Parse(data);
                 if (result != null)
                 {
                     var modInfo = result["data"];
@@ -332,13 +340,15 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
                     {
                         var returnData = new CurseForgeInfo();
                         returnData = modInfo.ToObject<CurseForgeInfo>() ?? throw new Exception("无法反序列化为 CurseForgeInfo");
-                        returnData.Dependencies = modInfo["latestFiles"]?.SelectMany(file => file["dependencies"] ?? new JArray())
-                            .Select(dep => new CurseForgeDependenciesMeta
-                            {
-                                Id = (int)(dep["modId"] ?? 0),
-                                Type = (int)(dep["relationType"] ?? 0)
-                            })
-                            .ToList() ?? new List<CurseForgeDependenciesMeta>();
+                        returnData.Dependencies = modInfo["latestFiles"] is JsonArray latestFiles
+                            ? latestFiles.SelectMany(file => file?["dependencies"] as JsonArray ?? new JsonArray())
+                                .Select(dep => new CurseForgeDependenciesMeta
+                                {
+                                    Id = (int)(dep["modId"] ?? 0),
+                                    Type = (int)(dep["relationType"] ?? 0)
+                                })
+                                .ToList()
+                            : new List<CurseForgeDependenciesMeta>();
                         return returnData;
                     }
                     else
@@ -372,19 +382,19 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
 
             if (!string.IsNullOrEmpty(data))
             {
-                var result = JObject.Parse(data);
+                var result = JsonNode.Parse(data);
                 if (result != null)
                 {
                     var modInfo = result["data"];
                     if (modInfo != null)
                     {
-                        var exactMatches = modInfo["exactMatches"]?.ToArray();
+                        var exactMatches = modInfo["exactMatches"] as JsonArray;
                         if (exactMatches != null)
                         {
                             var returnData = new Dictionary<long, FingerprintsFilesMeta>();
                             foreach (var match in exactMatches)
                             {
-                                var fingerprint = match["fingerprint"]?.Value<long>();
+                                var fingerprint = match["fingerprint"]?.GetValue<long>();
                                 var modData = match["file"];
                                 if (modData != null && fingerprint.HasValue)
                                 {
@@ -423,7 +433,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
             if (string.IsNullOrEmpty(Id) || string.IsNullOrEmpty(FileId))
                 throw new ArgumentNullException("ModId or FileId cannot be null or empty.");
             var url = GetData($"/v1/mods/{Id}/files/{FileId}/download-url", API_KEY).Result;
-            return JObject.Parse(url)["data"]!.ToString() ?? throw new Exception("提取Url失败");
+            return JsonNode.Parse(url)["data"]!.ToString() ?? throw new Exception("提取Url失败");
         }
 
         /// <summary>
@@ -439,7 +449,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
             if (string.IsNullOrEmpty(Id) || string.IsNullOrEmpty(FileId))
                 throw new ArgumentNullException("ModId or FileId cannot be null or empty.");
             var url = await GetData($"/v1/mods/{Id}/files/{FileId}/download-url", API_KEY);
-            return JObject.Parse(url)["data"]!.ToString() ?? throw new Exception("提取Url失败");
+            return JsonNode.Parse(url)["data"]!.ToString() ?? throw new Exception("提取Url失败");
         }
 
         /// <summary>
@@ -482,15 +492,15 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
             if (!string.IsNullOrEmpty(data))
             {
                 var returnData = new List<CurseForgeSearchResult>();
-                var result = JObject.Parse(data);
+                var result = JsonNode.Parse(data);
                 if (result != null)
                 {
-                    var mods = result["data"]?.ToArray();
+                    var mods = result["data"] as JsonArray;
                     if (mods != null)
                     {
                         foreach (var mod in mods)
                         {
-                            var modData = (JObject)mod;
+                            var modData = mod!.AsObject();
                             var modResult = new CurseForgeSearchResult
                             {
                                 Id = modData["id"]?.ToString() ?? string.Empty,
@@ -501,21 +511,26 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
                                 GameVersion = modData["gameVersion"]?.ToString() ?? string.Empty,
                                 DownloadCount = modData["downloadCount"]?.ToString() ?? string.Empty,
                                 IconUrl = modData["iconUrl"]?.ToString() ?? string.Empty,
-                                IsFeatured = modData["isFeatured"]?.Value<bool>() ?? false,
-                                Authors = modData["authors"]?.Select(a => new AuthorMeta
+                                IsFeatured = modData["isFeatured"]?.GetValue<bool>() ?? false,
+                                Authors = modData["authors"] is JsonArray authorsArr
+                                    ? authorsArr.Select(a => new AuthorMeta
                                 {
                                     Id = a["id"]?.ToString() ?? string.Empty,
                                     Name = a["name"]?.ToString() ?? string.Empty,
                                     Url = a["url"]?.ToString() ?? string.Empty
-                                }).ToList() ?? new List<AuthorMeta>(),
-                                Categories = modData["categories"]?.Select(c => new CategoryMeta
+                                }).ToList()
+                                    : new List<AuthorMeta>(),
+                                Categories = modData["categories"] is JsonArray categoriesArr
+                                    ? categoriesArr.Select(c => new CategoryMeta
                                 {
                                     Id = (int)c["id"]!,
                                     Name = c["name"]?.ToString() ?? string.Empty,
                                     Slug = c["slug"]?.ToString() ?? string.Empty,
                                     Url = c["url"]?.ToString() ?? string.Empty
-                                }).ToList() ?? new List<CategoryMeta>(),
-                                Screenshots = modData["screenshots"]?.Select(s => new ScreenshotsMeta
+                                }).ToList()
+                                    : new List<CategoryMeta>(),
+                                Screenshots = modData["screenshots"] is JsonArray screenshotsArr
+                                    ? screenshotsArr.Select(s => new ScreenshotsMeta
                                 {
                                     Id = (int)s["id"]!,
                                     ModId = (int)s["modId"]!,
@@ -523,7 +538,8 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
                                     Description = s["description"]?.ToString() ?? string.Empty,
                                     ThumbnailUrl = s["thumbnailUrl"]?.ToString() ?? string.Empty,
                                     Url = s["url"]?.ToString() ?? string.Empty
-                                }).ToList() ?? new List<ScreenshotsMeta>()
+                                }).ToList()
+                                    : new List<ScreenshotsMeta>()
                             };
                             returnData.Add(modResult);
                         }

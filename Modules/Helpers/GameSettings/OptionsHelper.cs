@@ -1,9 +1,10 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
 namespace Qomicex.Core.Modules.Helpers.GameSettings
@@ -29,14 +30,14 @@ namespace Qomicex.Core.Modules.Helpers.GameSettings
             _versionSpecific = versionSpecific;
 
             var optionsJson = File.ReadAllText(optionsJsonPath);
-            _options = JsonConvert.DeserializeObject<List<MinecraftOption>>(optionsJson) ?? new List<MinecraftOption>();
+            _options = JsonSerializer.Deserialize<List<MinecraftOption>>(optionsJson) ?? new List<MinecraftOption>();
 
             var descJson = File.ReadAllText(descriptionsJsonPath);
-            _descriptions = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(descJson)
+            _descriptions = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(descJson)
                 ?? new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
 
-            var manifest = JObject.Parse(minecraftManifest);
-            var versions = manifest["versions"] as JArray;
+            var manifest = JsonNode.Parse(minecraftManifest)!.AsObject();
+            var versions = manifest["versions"] as JsonArray;
             _versions = new List<GameVersion>();
             if (versions != null)
             {
@@ -301,22 +302,22 @@ namespace Qomicex.Core.Modules.Helpers.GameSettings
 
         public class MinecraftOption
         {
-            [JsonProperty("name")]
+            [JsonPropertyName("name")]
             public string Name { get; set; } = "";
 
-            [JsonProperty("defaultValue")]
+            [JsonPropertyName("defaultValue")]
             public string DefaultValue { get; set; } = "";
 
-            [JsonProperty("validValues")]
+            [JsonPropertyName("validValues")]
             public string ValidValues { get; set; } = "";
 
-            [JsonProperty("introducedVersion")]
+            [JsonPropertyName("introducedVersion")]
             public string IntroducedVersion { get; set; } = "";
 
-            [JsonProperty("introducedVersionRaw")]
+            [JsonPropertyName("introducedVersionRaw")]
             public string IntroducedVersionRaw { get; set; } = "";
 
-            [JsonProperty("category")]
+            [JsonPropertyName("category")]
             public string Category { get; set; } = "";
         }
 

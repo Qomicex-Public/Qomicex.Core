@@ -1,4 +1,5 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
+using System.Text.Json;
 using Qomicex.Core.Modules.Helpers.Resources;
 using System;
 using System.Collections.Generic;
@@ -81,7 +82,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                 throw new Exception("读取Forge安装器内容失败，请检查安装器文件是否正确", e);
             }
 
-            var installProfileJson = JObject.Parse(installProfileData!);
+            var installProfileJson = JsonNode.Parse(installProfileData!)!.AsObject();
 
             //处理Json
             try
@@ -99,7 +100,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                 var forgeVersion = installProfileJson["version"]?.ToString().Split("-")[2];
 
                 //生成版本Json
-                var versionData = JObject.Parse(jsonData!);
+                var versionData = JsonNode.Parse(jsonData!)!.AsObject();
                 versionData["id"] = versionId;
                 versionData["inheritsFrom"] = this.gameVersion;
                 jsonData = versionData.ToString();
@@ -202,13 +203,13 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             }
 
             //Processor后处理
-            var processors = installProfileJson["processors"] as JArray;
+            var processors = installProfileJson["processors"] as JsonArray;
             if (processors != null && processors.Count > 0)
             {
                 Trace.WriteLine($"开始执行Processor后处理，共 {processors.Count} 个处理器");
                 foreach (var processor in processors)
                 {
-                    var processorObj = (JObject)processor;
+                    var processorObj = processor!.AsObject();
                     string processorJar = processorObj["jar"]?.ToString() ?? "未知";
                     Trace.WriteLine($"处理Processor: {processorJar}");
 
@@ -266,7 +267,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                 } 
             }
 
-            var installProfileJson = JObject.Parse(installProfileData!);
+            var installProfileJson = JsonNode.Parse(installProfileData!)!.AsObject();
 
             if (string.IsNullOrEmpty(jsonData))
                 jsonData = installProfileJson["versionInfo"]?.ToString() ?? throw new Exception("无法找到版本Json信息");
@@ -287,7 +288,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                 var forgeVersion = installProfileJson["version"]?.ToString().Split("-")[2];
 
                 //生成版本Json
-                var versionData = JObject.Parse(jsonData!);
+                var versionData = JsonNode.Parse(jsonData!)!.AsObject();
                 versionData["id"] = versionId;
                 versionData["inheritsFrom"] = this.gameVersion;
                 jsonData = versionData.ToString();
@@ -330,8 +331,9 @@ namespace Qomicex.Core.Modules.Helpers.Installers
 
             //解压Forge Jar
             //提取并写入Forge主Jar文件
-            var jarMavenPath = MavenToPath(installProfileJson["install"]?["path"]?.ToString()!);
-            var filePath = installProfileJson["install"]?["filePath"]?.ToString();
+            var jarMavenPath = MavenToPath(installProfileJson["install"]?["path"]?.ToString()! ?? installProfileJson?["path"]?.ToString()!);
+            var filePath = installProfileJson["install"]?["filePath"]?.ToString() ?? MavenToPath($@"maven/{installProfileJson?["path"]?.ToString()}");
+            Trace.WriteLine(new { forgeInstallerPath = forgeInstallerPath, filePath = filePath });
             var forgeJar = GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, filePath!);
             var jarFullPath = Path.Combine(this.gameDir, "libraries", jarMavenPath);
             var jarDir = Path.GetDirectoryName(jarFullPath);
@@ -383,7 +385,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
 
             try
             {
-                var installProfileJson = JObject.Parse(installProfileData!);
+                var installProfileJson = JsonNode.Parse(installProfileData!)!.AsObject();
                 string profileName = string.IsNullOrEmpty(installProfileJson["profile"]?.ToString())
                     ? installProfileJson["install"]?["profileName"]?.ToString() ?? string.Empty
                     : installProfileJson["profile"]?.ToString()!;
@@ -395,7 +397,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                     throw new Exception("安装器版本不正确，请检查安装器文件是否正确");
                 }
 
-                bool hasProcessors = installProfileJson.ContainsKey("processors") && installProfileJson["processors"]?.Count() > 0;
+                bool hasProcessors = installProfileJson.ContainsKey("processors") && installProfileJson["processors"]!.AsArray().Count > 0;
                 return !hasProcessors;
             }
             catch (Exception e)
@@ -489,19 +491,18 @@ namespace Qomicex.Core.Modules.Helpers.Installers
 
             //获取缺失 libs
             var libs = new List<LocalResourceHelper.LibInfo>();
-            var installProfileJson = JObject.Parse(installProfileData!);
+            var installProfileJson = JsonNode.Parse(installProfileData!)!.AsObject();
 
             var profileLibraries = installProfileJson.ContainsKey("libraries")
-            ? installProfileJson["libraries"] as JArray
-            : installProfileJson["versionInfo"]?["libraries"] as JArray;
+            ? installProfileJson["libraries"] as JsonArray
+            : installProfileJson["versionInfo"]?["libraries"] as JsonArray;
 
             foreach (var lib in profileLibraries!)
             {
-                if (lib.Contains("clientreq"))
-                    if (lib["clientreq"]?.ToString() == "false")
+                var libObj = lib!.AsObject();
+                if (libObj.ContainsKey("clientreq"))
+                    if (libObj["clientreq"]?.ToString() == "false")
                         continue;
-
-                var libObj = (JObject)lib;
                 var libInfo = new LocalResourceHelper.LibInfo
                 {
                     FullName = libObj["name"]?.ToString() ?? string.Empty,

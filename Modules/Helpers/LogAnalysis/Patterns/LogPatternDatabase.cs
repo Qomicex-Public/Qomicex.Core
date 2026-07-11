@@ -1,11 +1,12 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Qomicex.Core.Common;
 using Qomicex.Core.Modules.Helpers.LogAnalysis.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
 namespace Qomicex.Core.Modules.Helpers.LogAnalysis.Patterns;
@@ -109,8 +110,8 @@ public sealed class LogPatternDatabase
     /// </summary>
     private void ParsePatterns(string jsonContent, bool isUserPattern = false)
     {
-        var config = JObject.Parse(jsonContent);
-        var patterns = config["patterns"] as JArray;
+        var config = JsonNode.Parse(jsonContent)!.AsObject();
+        var patterns = config["patterns"] as JsonArray;
 
         if (patterns == null) return;
 
@@ -119,16 +120,18 @@ public sealed class LogPatternDatabase
             try
             {
                 // 使用 C# 9+ collection expressions
-                var solutions = pattern["solutions"]?.Select(s => new PatternSolution(
-                    Priority: s["priority"]?.Value<int>() ?? 1,
-                    Description: s["description"]?.ToString() ?? "",
-                    ActionType: s["actionType"]?.ToString() ?? "Unknown",
-                    Parameters: s["parameters"]?.ToObject<Dictionary<string, object>>() ?? new Dictionary<string, object>()
-                )).ToList() ?? [];
+                var solutions = pattern["solutions"] is JsonArray solutionsArr
+                    ? solutionsArr.Select(s => new PatternSolution(
+                        Priority: s?["priority"]?.GetValue<int>() ?? 1,
+                        Description: s?["description"]?.ToString() ?? "",
+                        ActionType: s?["actionType"]?.ToString() ?? "Unknown",
+                        Parameters: s?["parameters"]?.ToObject<Dictionary<string, object>>() ?? new Dictionary<string, object>()
+                    )).ToList()
+                    : [];
 
                 // 解析国际化名称
                 var i18nNames = new Dictionary<string, I18nInfo>();
-                if (pattern["i18n"] is JObject i18n)
+                if (pattern["i18n"] is JsonObject i18n)
                 {
                     foreach (var lang in i18n)
                     {
@@ -140,7 +143,9 @@ public sealed class LogPatternDatabase
                 }
 
                 // 获取正则表达式列表
-                var regexPatterns = pattern["regexPatterns"]?.Select(r => r.ToString()).ToList() ?? [];
+                var regexPatterns = pattern["regexPatterns"] is JsonArray regexArr
+                    ? regexArr.Select(r => r?.ToString()).ToList()
+                    : [];
 
                 // 创建 ErrorPattern
                 var errorPattern = new ErrorPattern(

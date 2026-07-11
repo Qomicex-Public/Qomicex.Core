@@ -1,7 +1,8 @@
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text.Json.Nodes;
+using Qomicex.Core.Common;
 
 namespace Qomicex.Core.Modules.Helpers.Resources
 {
@@ -28,7 +29,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
             try
             {
                 var json = await _httpClient.GetStringAsync(manifestUrl);
-                return JObject.Parse(json);
+                var obj = JsonNode.Parse(json)!.AsObject(); return new DynamicJsonObject(obj);
             }
             catch (Exception ex)
             {

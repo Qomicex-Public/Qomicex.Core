@@ -1,5 +1,5 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Qomicex.Core.Modules.Helpers.Resources;
 using System;
 using System.Collections.Generic;
@@ -146,7 +146,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                         return new List<OptiFineVersionInfo>();
                     }
 
-                    List<OptiFineVersionInfo>? versions = JsonConvert.DeserializeObject<List<OptiFineVersionInfo>>(json);
+                    List<OptiFineVersionInfo>? versions = JsonSerializer.Deserialize<List<OptiFineVersionInfo>>(json);
 
                     // 版本按Patch号降序排序
                     if (versions != null && versions.Count > 0)
@@ -205,10 +205,10 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             try
             {
                 // 解析基础版本JSON
-                JObject baseJson = JObject.Parse(baseVersion.ToJson());
+                JsonObject baseJson = JsonNode.Parse(baseVersion.ToJson())!.AsObject();
 
                 // 创建新的版本JSON
-                JObject newJson = new JObject
+                JsonObject newJson = new JsonObject
                 {
                     ["id"] = versionId,
                     ["inheritsFrom"] = _gameVersion,
@@ -217,40 +217,40 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                     ["releaseTime"] = DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ssZ"),
                     ["mainClass"] = "net.minecraft.launchwrapper.Launch",
                     ["minecraftArguments"] = "--tweakClass optifine.OptiFineTweaker",
-                    ["libraries"] = new JArray()
+                    ["libraries"] = new JsonArray()
                 };
 
                 // 添加基础库
-                if (baseJson["libraries"] is JArray baseLibraries)
+                if (baseJson["libraries"] is JsonArray baseLibraries)
                 {
                     foreach (var lib in baseLibraries)
                     {
-                        ((JArray)newJson["libraries"]!).Add(lib);
+                        ((JsonArray)newJson["libraries"]!).Add(lib);
                     }
                 }
 
                 // 添加OptiFine特定库
-                var optiLib = JObject.FromObject(new
+                var optiLib = JsonSerializer.SerializeToNode(new
                 {
                     name = $"optifine:OptiFine:{_gameVersion}_{optiVersion.Type}_{optiVersion.Patch}"
-                });
-                ((JArray)newJson["libraries"]!).Add(optiLib);
+                })!.AsObject();
+                ((JsonArray)newJson["libraries"]!).Add(optiLib);
 
-                var launchWrapperLib = JObject.FromObject(new
+                var launchWrapperLib = JsonSerializer.SerializeToNode(new
                 {
                     name = "net.minecraft:launchwrapper:1.12"
-                });
-                ((JArray)newJson["libraries"]!).Add(launchWrapperLib);
+                })!.AsObject();
+                ((JsonArray)newJson["libraries"]!).Add(launchWrapperLib);
 
                 // 合并inheritsFromJson（如果提供）
                 if (!string.IsNullOrEmpty(inheritsFromJson))
                 {
-                    newJson = JObject.Parse(MergeVersionJson(inheritsFromJson, newJson.ToString(), versionId));
+                    newJson = JsonNode.Parse(MergeVersionJson(inheritsFromJson, newJson.ToString(), versionId))!.AsObject();
                 }
 
                 // 保存版本JSON
                 string jsonPath = Path.Combine(versionDir, $"{versionId}.json");
-                await File.WriteAllTextAsync(jsonPath, newJson.ToString(Formatting.Indented));
+                await File.WriteAllTextAsync(jsonPath, newJson.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
 
                 // 复制客户端JAR
                 string sourceJar = Path.Combine(_gameDir, "versions", _gameVersion, $"{_gameVersion}.jar");

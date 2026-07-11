@@ -1,9 +1,10 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO.Compression;
 using System.IO.Pipes;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Qomicex.Core.Modules.Helpers.Installers.Modpacks
 {
@@ -60,7 +61,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers.Modpacks
             var info = new ModrinthModpackInfo();
             var jsonData = Encoding.UTF8.GetString(GeneralHelper.ReadSpecifyFileFromZip(_modpackFilePath, "modrinth.index.json"));
             
-            var json = JObject.Parse(jsonData);
+            var json = JsonNode.Parse(jsonData)!.AsObject();
 
             if (json["game"]?.ToString() != "minecraft")
             {
@@ -71,12 +72,12 @@ namespace Qomicex.Core.Modules.Helpers.Installers.Modpacks
             info.Description = json["summary"]?.ToString() ?? string.Empty;
             info.Version = json["versionId"]?.ToString() ?? string.Empty;
 
-            var deps = json["dependencies"] as JObject;
+            var deps = json["dependencies"] as JsonObject;
             if (deps != null)
             {
-                foreach (var prop in deps.Properties())
+                foreach (var prop in deps)
                 {
-                    string loaderType = prop.Name;
+                    string loaderType = prop.Key;
                     string loaderVersion = prop.Value?.ToString() ?? "";
 
                     if (loaderType == "minecraft")
@@ -96,7 +97,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers.Modpacks
                 }
             }
             
-            var filesArray = json["files"] as JArray ?? [];
+            var filesArray = json["files"] as JsonArray ?? [];
             var basePath = _versionIsolation ? Path.Combine(_gameDir, "versions", versionId) : _gameDir;
             foreach (var file in filesArray)
             {
@@ -109,7 +110,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers.Modpacks
                     Path = Path.Combine(basePath, file["path"]?.ToString() ?? string.Empty),
                     Hash = file["hashes"]?["sha1"]?.ToString() ?? string.Empty,
                     Url = file["downloads"]?[0]?.ToString() ?? string.Empty,
-                    Size = file["fileSize"]?.ToObject<long>() ?? 0
+                    Size = file["fileSize"]?.GetValue<long>() ?? 0
                 };
                 info.Files.Add(fileInfo);
             }
