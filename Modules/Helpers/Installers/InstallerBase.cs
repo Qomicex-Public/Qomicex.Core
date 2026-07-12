@@ -64,11 +64,8 @@ namespace Qomicex.Core.Modules.Helpers.Installers
 
         internal string MergeVersionJson(string MainVersionJson, string MergedVersionJson, string? DefaultVersionID)
         {
-            var mainVersionObj = JsonNode.Parse(MainVersionJson)!.AsObject();
-
             var JsonData = MergeJson(MainVersionJson, MergedVersionJson);
             var Json = JsonNode.Parse(JsonData)!.AsObject();
-            Json["id"] = mainVersionObj["id"]?.DeepClone();
             Json.Remove("inheritsFrom");
             if (!string.IsNullOrEmpty(DefaultVersionID))
             {
