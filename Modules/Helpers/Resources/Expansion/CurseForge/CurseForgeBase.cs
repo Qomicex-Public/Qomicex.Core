@@ -467,21 +467,19 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
                             var returnData = new Dictionary<long, FingerprintsFilesMeta>();
                             foreach (var match in exactMatches)
                             {
-                                var fingerprint = match["fingerprint"]?.GetValue<long>();
-                                var modData = match["file"];
-                                if (modData != null && fingerprint.HasValue)
-                                {
-                                    var fingerprintsFilesMeta = modData.ToObject<FingerprintsFilesMeta>()
-                                        ?? throw new Exception("无法反序列化为 FingerprintsFilesMeta");
-                                    returnData[fingerprint.Value] = fingerprintsFilesMeta;
-                                }
+                                var modData = match?["file"];
+                                if (modData == null) continue;
+                                var fingerprintsFilesMeta = modData.ToObject<FingerprintsFilesMeta>()
+                                    ?? throw new Exception("无法反序列化为 FingerprintsFilesMeta");
+                                var fingerprint = modData["fileFingerprint"]?.GetValue<long>()
+                                    ?? (modData["id"]?.GetValue<long>() ?? 0);
+                                if (fingerprint != 0)
+                                    returnData[fingerprint] = fingerprintsFilesMeta;
                             }
                             return returnData;
                         }
                         else
-                        {
                             return new Dictionary<long, FingerprintsFilesMeta>();
-                        }
                     }
                     else
                         throw new Exception("Error parsing CurseForge response.");
