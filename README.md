@@ -65,7 +65,7 @@ dotnet build Qomicex.Core.csproj -c Release
 |------|------|
 | 目标框架 | `net10.0` |
 | 语言特性 | 可空引用类型、隐式 using 启用 |
-| JSON | `Newtonsoft.Json` 13.0.5-beta1 |
+| JSON | `System.Text.Json`（内置） |
 | TOML | `Tomlyn` 0.17.0 |
 | 图像 | `SkiaSharp` 2.88.7 |
 | DNS（服务器发现 / SRV） | `DnsClient` 1.8.0 |
@@ -241,7 +241,6 @@ Qomicex.Core/
 │     ├─ JavaHelper.cs              # Java 扫描与兼容性
 │     ├─ GameVersion.cs             # 从 jar 识别游戏版本
 │     ├─ AccountHelper.cs           # 离线 UUID 生成
-│     ├─ SkinHelper.cs              # 皮肤渲染（SkiaSharp）
 │     ├─ SystemInfoHelper.cs        # 系统信息 / ClassPath 分隔符
 │     ├─ Account/                   # Microsoft / Yggdrasil / Tongyi 认证
 │     ├─ GameSettings/              # options.txt 与 servers.dat 读写
