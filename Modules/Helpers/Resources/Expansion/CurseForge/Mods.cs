@@ -36,6 +36,17 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
         }
 
         /// <summary>
+        /// 获取指定Mod的文件信息
+        /// </summary>
+        /// <param name="gameId"></param>
+        /// <param name="fileId"></param>
+        /// <returns></returns>
+        public async Task<CurseForgeFileInfo> GetFileInfo(string gameId, string fileId)
+        {
+            return await base.GetFileInfo(gameId, fileId);
+        }
+
+        /// <summary>
         /// 异步搜索CurseForge上的Mod
         /// </summary>
         /// <param name="SearchFilter">搜索关键词</param>

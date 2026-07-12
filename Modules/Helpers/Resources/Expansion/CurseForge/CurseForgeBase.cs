@@ -206,6 +206,64 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
             public int Type { get; set; } = 1;
         }
 
+        public class CurseForgeFileInfo
+        {
+            [JsonPropertyName("id")]
+            public string FileId { get; set; } = string.Empty;
+            [JsonPropertyName("modId")]
+            public string ModId { get; set; } = string.Empty;
+            [JsonPropertyName("displayName")]
+            public string DisplayName { get; set; } = string.Empty;
+            [JsonPropertyName("fileName")]
+            public string FileName { get; set; } = string.Empty;
+            [JsonPropertyName("releaseType")]
+            public int ReleaseType { get; set; } = 1;
+            [JsonPropertyName("fileStatus")]
+            public int FileStatus { get; set; } = 1;
+            [JsonPropertyName("dependencies")]
+            public List<CurseForgeDependenciesMeta> Dependencies { get; set; } = new List<CurseForgeDependenciesMeta>();
+        }
+
+        /// <summary>
+        /// 获取指定资源的文件信息
+        /// </summary>
+        /// <param name="gameId"></param>
+        /// <param name="fileId"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        internal async Task<CurseForgeFileInfo> GetFileInfo(string gameId,string fileId)
+        {
+            var url = $"/v1/games/{gameId}/files/{fileId}";
+            var data = await GetData(url, API_KEY);
+            if (!string.IsNullOrEmpty(data))
+            {
+                var result = JsonNode.Parse(data);
+                if (result != null)
+                {
+                    var fileInfo = result["data"];
+                    if (fileInfo != null)
+                    {
+                        var returnData = new CurseForgeFileInfo();
+                        returnData = fileInfo.ToObject<CurseForgeFileInfo>() ?? throw new Exception("无法反序列化为 CurseForgeFileInfo");
+                        returnData.Dependencies = fileInfo["dependencies"] is JsonArray dependenciesArr
+                            ? dependenciesArr.Select(dep => new CurseForgeDependenciesMeta
+                            {
+                                Id = (int)(dep["modId"] ?? 0),
+                                Type = (int)(dep["relationType"] ?? 0)
+                            }).ToList()
+                            : new List<CurseForgeDependenciesMeta>();
+                        return returnData;
+                    }
+                    else
+                        throw new Exception("Error parsing CurseForge response.");
+                }
+                else
+                    throw new Exception("Error parsing CurseForge response.");
+            }
+            else
+                throw new Exception("Error fetching data from CurseForge.");
+        }
+
         /// <summary>
         /// 获取推荐的资源列表
         /// </summary>
