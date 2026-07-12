@@ -206,6 +206,16 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
             public int Type { get; set; } = 3;
         }
 
+        public enum CurseForgeDependenciesType
+        {
+            EmbeddedLibrary = 1,
+            OptionalDependency = 2,
+            RequiredDependency = 3,
+            Tool = 4,
+            Incompatible = 5,
+            Include = 6
+        }
+
         public class CurseForgeFileInfo
         {
             [JsonPropertyName("id")]
