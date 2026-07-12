@@ -229,8 +229,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
             {
                 if (cfDict.TryGetValue(packInfo.CFHash, out var cfMeta))
                 {
-                    if (int.TryParse(cfMeta.ModId, out int modId))
-                        packInfo.CurseForgeId = modId;
+                    packInfo.CurseForgeId = cfMeta.ModId;
                     packInfo.CurseForgeMeta = cfMeta;
                 }
 
@@ -242,20 +241,20 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                         packInfo.Name = mrMeta.Name;
                     else
                     {
-                        if (!string.IsNullOrEmpty(cfMeta?.ModId))
+                        if (cfMeta?.ModId > 0)
                         {
                             var cf = new CurseForge.ResourcePacks(_apiKey);
-                            packInfo.Name = cf.GetInfoAsync(cfMeta.ModId).Result.Name;
+                            packInfo.Name = cf.GetInfoAsync(cfMeta.ModId.ToString()).Result.Name;
                         }
                     }
                     if (!string.IsNullOrEmpty(mrMeta.VersionNumber))
                         packInfo.Version = mrMeta.VersionNumber;
                     else
                     {
-                        if (!string.IsNullOrEmpty(cfMeta?.ModId))
+                        if (cfMeta?.ModId > 0)
                         {
                             var cf = new CurseForge.ResourcePacks(_apiKey);
-                            var file = cf.GetInfoAsync(cfMeta.ModId).Result.Files.FirstOrDefault(d => d.FileId == cfMeta.FileId);
+                            var file = cf.GetInfoAsync(cfMeta.ModId.ToString()).Result.Files.FirstOrDefault(d => d.FileId == cfMeta.FileId.ToString());
                             packInfo.Version = file?.FileName ?? string.Empty;
                         }
                     }

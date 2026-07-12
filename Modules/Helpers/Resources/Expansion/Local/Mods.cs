@@ -241,7 +241,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
 
                 if (cfDict.TryGetValue(modInfo.CFHash, out var cfMeta))
                 {
-                    modInfo.CurseForgeId = Convert.ToInt32(cfMeta.ModId);
+                    modInfo.CurseForgeId = cfMeta.ModId;
                     modInfo.CurseForgeMeta = cfMeta;
                     Trace.WriteLine($"[LocalMods]   -> CF matched: id={modInfo.CurseForgeId}");
                 }

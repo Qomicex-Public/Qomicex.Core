@@ -100,8 +100,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
             {
                 if (cfDict.TryGetValue(shaderInfo.CFHash, out var cfMeta))
                 {
-                    if (int.TryParse(cfMeta.ModId, out int modId))
-                        shaderInfo.CurseForgeId = modId;
+                    shaderInfo.CurseForgeId = cfMeta.ModId;
                     shaderInfo.CurseForgeMeta = cfMeta;
                 }
 
@@ -113,20 +112,20 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                         shaderInfo.Name = mrMeta.Name;
                     else
                     {
-                        if (!string.IsNullOrEmpty(cfMeta?.ModId))
+                        if (cfMeta?.ModId > 0)
                         {
                             var cf = new CurseForge.Shaders(_apiKey);
-                            shaderInfo.Name = cf.GetInfoAsync(cfMeta.ModId).Result.Name; 
+                            shaderInfo.Name = cf.GetInfoAsync(cfMeta.ModId.ToString()).Result.Name; 
                         }
                     }    
                     if (!string.IsNullOrEmpty(mrMeta.VersionNumber))
                         shaderInfo.Version = mrMeta.VersionNumber;
                     else
                     {
-                        if (!string.IsNullOrEmpty(cfMeta?.ModId))
+                        if (cfMeta?.ModId > 0)
                         {
                             var cf = new CurseForge.Shaders(_apiKey);
-                            var file = cf.GetInfoAsync(cfMeta.ModId).Result.Files.FirstOrDefault(d => d.FileId == cfMeta.FileId);
+                            var file = cf.GetInfoAsync(cfMeta.ModId.ToString()).Result.Files.FirstOrDefault(d => d.FileId == cfMeta.FileId.ToString());
                             shaderInfo.Version = file?.FileName ?? string.Empty;
                         }
                     }

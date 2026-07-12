@@ -197,9 +197,9 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
         public class FingerprintsFilesMeta
         {
             [JsonPropertyName("modId")]
-            public string ModId { get; set; } = string.Empty;
+            public int ModId { get; set; }
             [JsonPropertyName("id")]
-            public string FileId { get; set; } = string.Empty;
+            public int FileId { get; set; }
             [JsonPropertyName("dependencies")]
             public CurseForgeDependenciesMeta? Dependencies { get; set; }
         }
