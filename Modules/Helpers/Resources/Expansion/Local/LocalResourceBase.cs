@@ -7,15 +7,14 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
 {
     public class LocalResourceBase
     {
-        // CurseForge 专用 MurmurHash2：先过滤空白字节再计算
+        // CurseForge 专用 fingerprint：过滤空白字节 + MurmurHash2 64-bit
         public static long CurseForgeFingerprint(byte[] data)
         {
-            // 过滤 0x09 (Tab), 0x0A (LF), 0x0D (CR), 0x20 (Space)
             var filtered = data.Where(b => b != 0x09 && b != 0x0A && b != 0x0D && b != 0x20).ToArray();
             return MurmurHash2(filtered, 1);
         }
 
-        // 标准 MurmurHash2 64-bit (MurmurHash64A)
+        // MurmurHash2 64-bit (MurmurHash64A)
         public static long MurmurHash2(byte[] data, uint seed = 1)
         {
             const ulong m = 0xc6a4a7935bd1e995;
@@ -38,7 +37,6 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                 len -= 8;
             }
 
-            // 处理剩余字节
             switch (len)
             {
                 case 7: h ^= (ulong)data[i + 6] << 48; goto case 6;
@@ -54,7 +52,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
             h *= m;
             h ^= h >> 47;
 
-            return (long)h;
+            return unchecked((long)h);
         }
 
         /// <summary>

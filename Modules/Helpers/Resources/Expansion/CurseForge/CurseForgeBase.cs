@@ -439,7 +439,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
         {
             if (Hashes == null || Hashes.Count == 0)
                 throw new ArgumentNullException(nameof(Hashes), "Hashs cannot be null or empty.");
-            var url = "/v1/fingerprints/432";
+            var url = "/v1/fingerprints";
 
             var payload = new
             {

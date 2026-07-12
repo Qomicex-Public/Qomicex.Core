@@ -101,7 +101,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                 string hash;
                 using (SHA1 sha1 = SHA1.Create())
                     hash = BitConverter.ToString(sha1.ComputeHash(fileBytes)).Replace("-", "").ToLowerInvariant();
-                long cfHash = CurseForgeFingerprint(fileBytes);
+                var cfHash = CurseForgeFingerprint(fileBytes);
 
                 ModInfo modInfo = new ModInfo
                 {
