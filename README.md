@@ -21,7 +21,6 @@ Qomicex 启动器的跨平台核心库，用 C# 编写，封装了 Minecraft 启
 ## 安装前须知
 
 + Qomicex.Core 仅支持最新的 LTS .NET 10.0。
-+ 本库依赖同级的 `Qomicex.Downloader` 项目，请确保子模块已完整检出。
 + 使用 SkiaSharp 时，`dotnet publish` 需加 `-p:IncludeNativeLibrariesForSelfExtract=true`。
 
 ## 安装
@@ -70,7 +69,7 @@ dotnet build Qomicex.Core.csproj -c Release
 | TOML | `Tomlyn` 0.17.0 |
 | 图像 | `SkiaSharp` 2.88.7 |
 | DNS（服务器发现 / SRV） | `DnsClient` 1.8.0 |
-| 依赖项目 | `Qomicex.Downloader`（下载库） |
+
 
 ## 核心组件
 

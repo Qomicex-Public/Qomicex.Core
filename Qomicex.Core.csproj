@@ -44,9 +44,6 @@
 		<Folder Include="Modules\Helpers\Account\" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="Qomicex.Downloader\Qomicex.Downloader.csproj" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
