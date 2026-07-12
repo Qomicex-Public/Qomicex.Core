@@ -15,41 +15,46 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
             return MurmurHash2(filtered, 1);
         }
 
-        // 标准 Murmur2 算法实现 (32-bit)
+        // 标准 MurmurHash2 64-bit (MurmurHash64A)
         public static long MurmurHash2(byte[] data, uint seed = 1)
         {
-            const uint m = 0x5bd1e995;
-            const int r = 24;
-            uint len = (uint)data.Length;
-            uint h = seed ^ len;
+            const ulong m = 0xc6a4a7935bd1e995;
+            const int r = 47;
+            int len = data.Length;
+            ulong h = seed ^ ((ulong)len * m);
             int i = 0;
 
-            while (len >= 4)
+            while (len >= 8)
             {
-                uint k = BitConverter.ToUInt32(data, i);
+                ulong k = BitConverter.ToUInt64(data, i);
                 k *= m;
                 k ^= k >> r;
                 k *= m;
 
-                h *= m;
                 h ^= k;
+                h *= m;
 
-                i += 4;
-                len -= 4;
+                i += 8;
+                len -= 8;
             }
 
+            // 处理剩余字节
             switch (len)
             {
-                case 3: h ^= (uint)(data[i + 2] << 16); goto case 2;
-                case 2: h ^= (uint)(data[i + 1] << 8); goto case 1;
+                case 7: h ^= (ulong)data[i + 6] << 48; goto case 6;
+                case 6: h ^= (ulong)data[i + 5] << 40; goto case 5;
+                case 5: h ^= (ulong)data[i + 4] << 32; goto case 4;
+                case 4: h ^= (ulong)data[i + 3] << 24; goto case 3;
+                case 3: h ^= (ulong)data[i + 2] << 16; goto case 2;
+                case 2: h ^= (ulong)data[i + 1] << 8; goto case 1;
                 case 1: h ^= data[i]; h *= m; break;
             }
 
-            h ^= h >> 13;
+            h ^= h >> 47;
             h *= m;
-            h ^= h >> 15;
+            h ^= h >> 47;
 
-            return h;
+            return (long)h;
         }
 
         /// <summary>
