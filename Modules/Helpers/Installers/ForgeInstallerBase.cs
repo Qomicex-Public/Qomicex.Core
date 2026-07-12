@@ -130,9 +130,9 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                             throw new Exception($"下载缺失的库文件失败: {cpJarPath}\n{ex.Message}");
                         }
                     }
-                    cps += $"{cpJarPath};";
+                    cps += $"{cpJarPath}{separator}";
                 }
-                cps = cps.TrimEnd(';');
+                cps = cps.TrimEnd(';', ':');
                 Trace.WriteLine($"构造完成的classpath: {cps}");
             }
 
