@@ -146,7 +146,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
         public class AuthorMeta
         {
             [JsonPropertyName("id")]
-            public string Id { get; set; } = string.Empty;
+            public int Id { get; set; }
             [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
             [JsonPropertyName("url")]
@@ -352,7 +352,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
                                 Authors = modData["authors"] is JsonArray authorsArr
                                     ? authorsArr.Select(a => new AuthorMeta
                                 {
-                                    Id = a["id"]?.ToString() ?? string.Empty,
+                                    Id = a["id"]?.GetValue<int>() ?? 0,
                                     Name = a["name"]?.ToString() ?? string.Empty,
                                     Url = a["url"]?.ToString() ?? string.Empty
                                 }).ToList()
@@ -586,7 +586,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
                                 Authors = modData["authors"] is JsonArray authorsArr
                                     ? authorsArr.Select(a => new AuthorMeta
                                 {
-                                    Id = a["id"]?.ToString() ?? string.Empty,
+                                    Id = a["id"]?.GetValue<int>() ?? 0,
                                     Name = a["name"]?.ToString() ?? string.Empty,
                                     Url = a["url"]?.ToString() ?? string.Empty
                                 }).ToList()
