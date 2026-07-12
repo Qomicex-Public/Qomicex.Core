@@ -741,6 +741,343 @@
           "actionType": "ReviewFullLog"
         }
       ]
+    },
+    {
+      "id": "gpu-intel-access-violation",
+      "category": "Resource",
+      "severity": "Critical",
+      "i18n": {
+        "zh": { "name": "Intel 核显驱动不兼容", "description": "Intel 核显驱动问题导致游戏崩溃，通常表现为 EXCEPTION_ACCESS_VIOLATION" },
+        "en": { "name": "Intel GPU Driver Incompatibility", "description": "Intel integrated GPU driver issue causing access violation crash" }
+      },
+      "regexPatterns": [
+        "# C  \\[ig"
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "你的 Intel 核显驱动存在问题，导致游戏无法正常运行。\n如果你的电脑存在独立显卡，请使用独立显卡而非 Intel 核显运行游戏。\n如果问题依然存在，请尝试升级显卡驱动到最新版本，或回退到出厂版本。\n如果还是不行，可尝试使用 8.0.51 或更低版本的 Java。",
+          "actionType": "UpdateDriver"
+        }
+      ]
+    },
+    {
+      "id": "gpu-amd-access-violation",
+      "category": "Resource",
+      "severity": "Critical",
+      "i18n": {
+        "zh": { "name": "AMD 显卡驱动不兼容", "description": "AMD 显卡驱动问题导致游戏崩溃，通常表现为 EXCEPTION_ACCESS_VIOLATION" },
+        "en": { "name": "AMD GPU Driver Incompatibility", "description": "AMD GPU driver issue causing access violation crash" }
+      },
+      "regexPatterns": [
+        "EXCEPTION_ACCESS_VIOLATION",
+        "# C  \\[atio"
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "你的 AMD 显卡驱动存在问题，导致游戏无法正常运行。\n请尝试升级显卡驱动到最新版本，或回退到出厂版本。\n如果还是不行，可以尝试使用 8.0.51 或更低版本的 Java。\n如果问题依然存在，可能需要更换显卡。",
+          "actionType": "UpdateDriver"
+        }
+      ]
+    },
+    {
+      "id": "gpu-nvidia-access-violation",
+      "category": "Resource",
+      "severity": "Critical",
+      "i18n": {
+        "zh": { "name": "Nvidia 显卡驱动不兼容", "description": "Nvidia 显卡驱动问题导致游戏崩溃，通常表现为 EXCEPTION_ACCESS_VIOLATION" },
+        "en": { "name": "Nvidia GPU Driver Incompatibility", "description": "Nvidia GPU driver issue causing access violation crash" }
+      },
+      "regexPatterns": [
+        "EXCEPTION_ACCESS_VIOLATION",
+        "# C  \\[nvoglv"
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "你的 Nvidia 显卡驱动存在问题，导致游戏无法正常运行。\n请尝试升级显卡驱动到最新版本，或回退到出厂版本。\n如果还是不行，可以尝试使用 8.0.51 或更低版本的 Java。\n如果问题依然存在，可能需要更换显卡。",
+          "actionType": "UpdateDriver"
+        }
+      ]
+    },
+    {
+      "id": "gpu-pixel-format",
+      "category": "Resource",
+      "severity": "Error",
+      "i18n": {
+        "zh": { "name": "无法设置像素格式", "description": "显卡驱动不支持游戏所需的像素格式，通常为驱动问题" },
+        "en": { "name": "Pixel Format Not Accelerated", "description": "GPU driver does not support the required pixel format" }
+      },
+      "regexPatterns": [
+        "Couldn't set pixel format",
+        "Pixel format not accelerated"
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "你的显卡驱动不支持游戏所需的像素格式，导致无法创建游戏窗口。\n请尝试升级显卡驱动到最新版本。\n如果有独立显卡，请确保使用独立显卡运行游戏。\n如果问题依然存在，可以在版本设置的 Java 选项中尝试使用 8.0.51 或更低版本的 Java。",
+          "actionType": "UpdateDriver"
+        }
+      ]
+    },
+    {
+      "id": "gpu-opengl-not-supported",
+      "category": "Resource",
+      "severity": "Error",
+      "i18n": {
+        "zh": { "name": "显卡不支持 OpenGL", "description": "当前显卡不支持 Minecraft 所需的 OpenGL 版本" },
+        "en": { "name": "OpenGL Not Supported", "description": "GPU does not support the OpenGL version required by Minecraft" }
+      },
+      "regexPatterns": [
+        "The driver does not appear to support OpenGL"
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "你的显卡不支持 Minecraft 所需的 OpenGL 版本。\n请尝试升级显卡驱动到最新版本。\n如果使用的是虚拟机或远程桌面，请确保启用了 3D 加速。\n极老的显卡可能无法运行较新版本的 Minecraft，请考虑降级游戏版本。",
+          "actionType": "UpdateDriver"
+        }
+      ]
+    },
+    {
+      "id": "optifine-forge-incompatible",
+      "category": "ModConflict",
+      "severity": "Error",
+      "i18n": {
+        "zh": { "name": "OptiFine 与 Forge 不兼容", "description": "OptiFine 与当前版本的 Forge 不兼容导致游戏崩溃" },
+        "en": { "name": "OptiFine Forge Incompatibility", "description": "OptiFine is incompatible with the current Forge version" }
+      },
+      "regexPatterns": [
+        "java\\.lang\\.NoSuchMethodError: 'void net\\.minecraft\\.client\\.renderer\\.texture\\.SpriteContents\\.<init>",
+        "java\\.lang\\.NoSuchMethodError: 'java\\.lang\\.String com\\.mojang\\.blaze3d\\.systems\\.RenderSystem\\.getBackendDescription",
+        "java\\.lang\\.NoSuchMethodError: 'void net\\.minecraft\\.client\\.renderer\\.block\\.model\\.BakedQuad\\.<init>",
+        "java\\.lang\\.NoSuchMethodError: 'net\\.minecraft\\.network\\.chat\\.FormattedText net\\.minecraft\\.client\\.gui\\.Font\\.ellipsize",
+        "The Mod File [^\\n]+optifine\\\\OptiFine[^\\n]+ has mods that were not found"
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "OptiFine 与当前版本的 Forge 不兼容，导致游戏崩溃。\n请前往 OptiFine 官网（https://optifine.net/downloads）查看 OptiFine 所兼容的 Forge 版本，并严格按对应版本重新安装游戏。\n你也可以尝试移除 OptiFine 后启动游戏。",
+          "actionType": "VisitWebsite"
+        }
+      ]
+    },
+    {
+      "id": "optifine-world-load",
+      "category": "ModConflict",
+      "severity": "Error",
+      "i18n": {
+        "zh": { "name": "OptiFine 导致无法加载世界", "description": "特定版本的 OptiFine 导致游戏无法加载存档" },
+        "en": { "name": "OptiFine World Load Failure", "description": "A specific OptiFine version causes world loading failure" }
+      },
+      "regexPatterns": [
+        "java\\.lang\\.NoSuchMethodError: net\\.minecraft\\.world\\.server\\.ChunkManager\\$ProxyTicketManager\\.shouldForceTicks"
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "你所使用的 OptiFine 版本存在 Bug，导致游戏无法加载存档。\n该问题只在特定 OptiFine 版本中出现，你可以尝试更换 OptiFine 的版本。\n建议前往 OptiFine 官网下载最新版或回退到之前能正常使用的版本。",
+          "actionType": "UpdateMod"
+        }
+      ]
+    },
+    {
+      "id": "shadersmod-optifine-conflict",
+      "category": "ModConflict",
+      "severity": "Error",
+      "i18n": {
+        "zh": { "name": "ShadersMod 与 OptiFine 冲突", "description": "同时安装了 ShadersMod 和 OptiFine，两者功能重复" },
+        "en": { "name": "ShadersMod OptiFine Conflict", "description": "ShadersMod and OptiFine installed together, redundant functionality" }
+      },
+      "regexPatterns": [
+        "Shaders Mod detected. Please remove it, OptiFine has built-in support for shaders"
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "无需同时安装 OptiFine 和 Shaders Mod，OptiFine 已经内置了光影支持。\n请删除 Shaders Mod 后游戏即可正常运行。",
+          "actionType": "RemoveMod"
+        }
+      ]
+    },
+    {
+      "id": "forge-incomplete-install",
+      "category": "ModConflict",
+      "severity": "Error",
+      "i18n": {
+        "zh": { "name": "Forge 安装不完整", "description": "Forge 未能完整安装，缺少必要的启动文件" },
+        "en": { "name": "Incomplete Forge Installation", "description": "Forge installation is incomplete, missing required startup files" }
+      },
+      "regexPatterns": [
+        "Cannot find launch target fmlclient, unable to launch",
+        "Invalid paths argument, contained no existing paths"
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "Forge 安装不完整，缺少必要的启动文件。\n请尝试重新安装 Forge。如果问题依然存在，建议删除当前版本并重新创建实例。",
+          "actionType": "ReinstallForge"
+        }
+      ]
+    },
+    {
+      "id": "forge-multiple-json",
+      "category": "ModConflict",
+      "severity": "Error",
+      "i18n": {
+        "zh": { "name": "版本 Json 中存在多个 Forge", "description": "版本配置文件中包含多个 Forge 条目导致启动失败" },
+        "en": { "name": "Duplicate Forge Entries", "description": "Version JSON contains multiple Forge entries" }
+      },
+      "regexPatterns": [
+        "Found multiple arguments for option fml\\.forgeVersion, but you asked for only one"
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "版本配置文件中存在多个 Forge 条目。\n这通常是因为安装了不兼容的 Forge 版本或版本文件损坏。\n请尝试重新安装 Forge，或重新创建实例。",
+          "actionType": "ReinstallForge"
+        }
+      ]
+    },
+    {
+      "id": "forge-old-version-java",
+      "category": "JavaRelated",
+      "severity": "Error",
+      "i18n": {
+        "zh": { "name": "低版本 Forge 与高版本 Java 不兼容", "description": "较老的 Forge 版本无法在较新的 Java 版本上运行" },
+        "en": { "name": "Old Forge Incompatible with New Java", "description": "Older Forge versions do not work with newer Java versions" }
+      },
+      "regexPatterns": [
+        "java\\.lang\\.NoSuchMethodError: sun\\.security\\.util\\.ManifestEntryVerifier"
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "你使用的 Forge 版本较老，与当前 Java 版本不兼容。\n请在版本设置的 Java 选项中改用 Java 8 或 Java 11。\n如果问题依然存在，建议升级 Forge 到与当前 Java 版本兼容的较新版本。",
+          "actionType": "DowngradeJava"
+        }
+      ]
+    },
+    {
+      "id": "java-openj9",
+      "category": "JavaRelated",
+      "severity": "Critical",
+      "i18n": {
+        "zh": { "name": "使用了不兼容的 OpenJ9 JVM", "description": "OpenJ9 JVM 与 Minecraft 不兼容，需要使用 HotSpot JVM" },
+        "en": { "name": "OpenJ9 JVM Not Supported", "description": "OpenJ9 JVM is incompatible with Minecraft, use HotSpot instead" }
+      },
+      "regexPatterns": [
+        "Open J9 is not supported",
+        "OpenJ9 is incompatible",
+        "\\.J9VMInternals\\."
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "你使用了 OpenJ9 JVM 启动游戏，但 Minecraft 需要 HotSpot JVM。\n请在版本设置或全局设置的 Java 选项中，更换为使用 HotSpot 的 Java 运行时（如 Microsoft OpenJDK、Adoptium Temurin、Oracle JDK 等）。",
+          "actionType": "ChangeJavaVersion"
+        }
+      ]
+    },
+    {
+      "id": "java-32bit",
+      "category": "JavaRelated",
+      "severity": "Critical",
+      "i18n": {
+        "zh": { "name": "使用了 32 位 Java", "description": "32 位 Java 无法为 Minecraft 分配足够的内存" },
+        "en": { "name": "32-bit Java Memory Limit", "description": "32-bit Java cannot allocate enough memory for Minecraft" }
+      },
+      "regexPatterns": [
+        "Invalid maximum heap size",
+        "Could not reserve enough space for 1048576KB object heap"
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "你使用了 32 位 Java 运行游戏，32 位 Java 最大只能分配约 1GB 内存，无法满足 Minecraft 的需求。\n请在版本设置或全局设置的 Java 选项中，更换为 64 位的 Java 运行时。\n推荐使用 Java 17 或 Java 21 的 64 位版本。",
+          "actionType": "ChangeJavaVersion"
+        }
+      ]
+    },
+    {
+      "id": "java-mod-needs-11",
+      "category": "JavaRelated",
+      "severity": "Error",
+      "i18n": {
+        "zh": { "name": "Mod 需要 Java 11 或更高版本", "description": "当前安装的 Mod 需要 Java 11 以上的运行环境" },
+        "en": { "name": "Mod Requires Java 11+", "description": "A mod requires Java 11 or higher to run" }
+      },
+      "regexPatterns": [
+        "has been compiled by a more recent version of the Java Runtime \\(class file version 55\\.0\\), this version of the Java Runtime only recognizes class file versions up to",
+        "java\\.lang\\.RuntimeException: java\\.lang\\.NoSuchMethodException: no such method: sun\\.misc\\.Unsafe\\.defineAnonymousClass",
+        "java\\.lang\\.IllegalArgumentException: The requested compatibility level JAVA_11 could not be set"
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "当前安装的 Mod 需要 Java 11 或更高版本才能运行。\n请在版本设置的 Java 选项中更换为 Java 11、Java 17 或 Java 21。\n如果你不确定使用哪个版本，推荐 Java 17（兼顾兼容性和性能）。",
+          "actionType": "UpgradeJava"
+        }
+      ]
+    },
+    {
+      "id": "mod-extracted",
+      "category": "ModConflict",
+      "severity": "Error",
+      "i18n": {
+        "zh": { "name": "Mod 文件被解压", "description": "Mod 文件被错误地解压到文件夹中，而不是以 .jar 形式使用" },
+        "en": { "name": "Extracted Mod Files", "description": "Mod files were incorrectly extracted to folders instead of being kept as .jar" }
+      },
+      "regexPatterns": [
+        "Extracted mod jars found, loading will NOT continue",
+        "The directories below appear to be extracted jar files\\. Fix this before you continue\\."
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "发现 Mod 文件夹中存在被解压的 Mod 文件。\nMod 文件应保持 .jar 格式放入 mods 文件夹，而不是被解压成文件夹。\n请删除被解压的文件夹，将原本的 .jar 文件放回 mods 文件夹。",
+          "actionType": "FixModFiles"
+        }
+      ]
+    },
+    {
+      "id": "mod-id-limit",
+      "category": "ModConflict",
+      "severity": "Error",
+      "i18n": {
+        "zh": { "name": "Mod 过多超出 ID 限制", "description": "安装的 Mod 数量过多，超出了游戏的 ID 上限" },
+        "en": { "name": "Mod ID Limit Exceeded", "description": "Too many mods installed, exceeding the game's ID limit" }
+      },
+      "regexPatterns": [
+        "maximum id range exceeded"
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "你安装的 Mod 数量过多，超出了游戏的注册 ID 上限。\n请尝试移除部分不需要的 Mod。\n或者安装 Just Enough IDs、JEI 等优化 Mod 来扩展 ID 上限。",
+          "actionType": "ReduceMods"
+        }
+      ]
+    },
+    {
+      "id": "mixin-bootstrap-missing",
+      "category": "ModConflict",
+      "severity": "Error",
+      "i18n": {
+        "zh": { "name": "MixinBootstrap 缺失", "description": "缺少 MixinBootstrap 库，导致 Mod 代码注入失败" },
+        "en": { "name": "Missing MixinBootstrap", "description": "Missing MixinBootstrap library causing mod injection failure" }
+      },
+      "regexPatterns": [
+        "java\\.lang\\.ClassNotFoundException: org\\.spongepowered\\.asm\\.launch\\.MixinTweaker"
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "缺少 MixinBootstrap 库，导致 Mod 无法正常注入。\n这通常是因为 Forge 或 Fabric 安装不完整。\n请尝试重新安装当前版本的 Forge 或 Fabric。",
+          "actionType": "ReinstallModLoader"
+        }
+      ]
     }
   ]
 }
