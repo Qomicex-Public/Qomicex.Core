@@ -7,7 +7,15 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
 {
     public class LocalResourceBase
     {
-        // Murmur2 算法实现
+        // CurseForge 专用 MurmurHash2：先过滤空白字节再计算
+        public static long CurseForgeFingerprint(byte[] data)
+        {
+            // 过滤 0x09 (Tab), 0x0A (LF), 0x0D (CR), 0x20 (Space)
+            var filtered = data.Where(b => b != 0x09 && b != 0x0A && b != 0x0D && b != 0x20).ToArray();
+            return MurmurHash2(filtered, 1);
+        }
+
+        // 标准 Murmur2 算法实现 (32-bit)
         public static long MurmurHash2(byte[] data, uint seed = 1)
         {
             const uint m = 0x5bd1e995;
