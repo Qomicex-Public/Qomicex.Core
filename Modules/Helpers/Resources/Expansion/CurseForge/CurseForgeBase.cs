@@ -170,7 +170,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
             public bool IsFeatured { get; set; } = false;
             [JsonPropertyName("categories")]
             public List<CategoryMeta> Categories { get; set; } = new List<CategoryMeta>();
-            [JsonPropertyName("iconUrl")]
+            [JsonIgnore]
             public string IconUrl { get; set; } = string.Empty;
             [JsonPropertyName("authors")]
             public List<AuthorMeta> Authors { get; set; } = new List<AuthorMeta>();
@@ -413,6 +413,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
                     {
                         var returnData = new CurseForgeInfo();
                         returnData = modInfo.ToObject<CurseForgeInfo>() ?? throw new Exception("无法反序列化为 CurseForgeInfo");
+                        returnData.IconUrl = modInfo["logo"]?["url"]?.GetValue<string>() ?? "";
                         returnData.Dependencies = modInfo["latestFiles"] is JsonArray latestFiles
                             ? latestFiles.SelectMany(file => file?["dependencies"] as JsonArray ?? new JsonArray())
                                 .Select(dep => new CurseForgeDependenciesMeta
