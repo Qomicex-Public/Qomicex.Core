@@ -2,6 +2,7 @@
   "version": "1.0.0",
   "lastUpdated": "2026-02-08",
   "patterns": [
+
     {
       "id": "out-of-memory-heap",
       "category": "Memory",
@@ -55,6 +56,45 @@
           "priority": 2,
           "description": "考虑减少同时加载的Mod数量",
           "actionType": "ReduceMods"
+        }
+      ]
+    },
+    {
+      "id": "out-of-memory-native",
+      "category": "Memory",
+      "severity": "Critical",
+      "i18n": {
+        "zh": { "name": "本机内存不足", "description": "JVM本机内存分配失败，系统物理内存或虚拟内存不足" },
+        "en": { "name": "Native OOM", "description": "JVM native memory allocation failed" }
+      },
+      "regexPatterns": [
+        "There is insufficient memory for the Java Runtime Environment to continue",
+        "Native memory allocation \\(mmap\\) failed to map",
+        "Out of Memory Error \\([a-z_]+\\.cpp:\\d+\\), pid=\\d+"
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "增加系统物理内存或虚拟内存（交换文件）大小",
+          "actionType": "IncreaseSystemMemory"
+        },
+        {
+          "priority": 2,
+          "description": "减少JVM堆内存分配（-Xmx），为本机内存留出更多空间",
+          "actionType": "DecreaseHeapSize"
+        },
+        {
+          "priority": 3,
+          "description": "关闭其他占用大量内存的应用程序",
+          "actionType": "CloseOtherApps"
+        },
+        {
+          "priority": 4,
+          "description": "添加JVM参数 -XX:HeapBaseMinAddress=32g 将Java堆放置在32GB虚拟地址以上",
+          "actionType": "AddJvmArgs",
+          "parameters": {
+            "args": "-XX:HeapBaseMinAddress=32g"
+          }
         }
       ]
     },
@@ -680,7 +720,9 @@
       "regexPatterns": [
         "Exception in thread",
         "A fatal error has been detected",
-        "Game crashed!"
+        "Game crashed!",
+        "There is insufficient memory for the Java Runtime Environment",
+        "Out of Memory Error \\([a-z_]+\\.cpp:\\d+\\), pid=\\d+"
       ],
       "solutions": [
         {
