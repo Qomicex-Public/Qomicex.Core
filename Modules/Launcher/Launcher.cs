@@ -376,9 +376,7 @@ namespace Qomicex.Core.Modules.Launcher
                         // 如果满足条件，则添加到参数字符串
                         if (rulesSuitable)
                         {
-                            if(value.Contains(" "))
-                                value = $"\"{value}\"";
-                            paramList.Add(value.TrimEnd(' '));
+                            paramList.Add(NormalizeArg(value));
                         }
                     }
                 }
@@ -427,7 +425,7 @@ namespace Qomicex.Core.Modules.Launcher
                         //检查参数
                         if (item is JsonValue jv && jv.TryGetValue(out string? _)) // 处理独立字符串项
                         {
-                            list.Add(item.ToString());
+                            list.Add(NormalizeArg(item.ToString()));
                         }
                     }
                 }
@@ -438,6 +436,14 @@ namespace Qomicex.Core.Modules.Launcher
                 list.AddRange(datas["minecraftArguments"]!.ToString().Split(' '));
             }
             return list;
+        }
+
+        string NormalizeArg(string value)
+        {
+            value = value.Trim();
+            if (value.Contains(" ") && !value.StartsWith("\"") && !value.EndsWith("\""))
+                value = $"\"{value}\"";
+            return value;
         }
 
         /// <summary>

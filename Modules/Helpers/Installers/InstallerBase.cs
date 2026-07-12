@@ -26,7 +26,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                 JsonObject MainJson = JsonNode.Parse(MainVersionJson)!.AsObject();
                 JsonObject MergedJson = JsonNode.Parse(MergedVersionJson)!.AsObject();
 
-                JsonNodeExtensions.Merge(MainJson, MergedJson, Common.MergeArrayHandling.Union, Common.MergeNullValueHandling.Ignore, StringComparison.OrdinalIgnoreCase);
+                JsonNodeExtensions.Merge(MainJson, MergedJson, Common.MergeArrayHandling.Concat, Common.MergeNullValueHandling.Ignore, StringComparison.OrdinalIgnoreCase);
                 return MainJson.ToJsonString();
             }
             catch

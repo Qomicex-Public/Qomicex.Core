@@ -59,15 +59,25 @@ namespace Qomicex.Core.Common
                         MergeInternal(targetObj, sourceObj, arrayHandling, nullHandling);
                         continue;
                     }
-                    if (targetValue is JsonArray targetArr && sourceValue is JsonArray sourceArr
-                        && arrayHandling == MergeArrayHandling.Union)
+                    if (targetValue is JsonArray targetArr && sourceValue is JsonArray sourceArr)
                     {
-                        foreach (var item in sourceArr)
+                        if (arrayHandling == MergeArrayHandling.Union)
                         {
-                            if (!targetArr.Any(t => JsonNode.DeepEquals(t, item)))
-                                targetArr.Add(item?.DeepClone());
+                            foreach (var item in sourceArr)
+                            {
+                                if (!targetArr.Any(t => JsonNode.DeepEquals(t, item)))
+                                    targetArr.Add(item?.DeepClone());
+                            }
+                            continue;
                         }
-                        continue;
+                        if (arrayHandling == MergeArrayHandling.Concat)
+                        {
+                            foreach (var item in sourceArr)
+                            {
+                                targetArr.Add(item?.DeepClone());
+                            }
+                            continue;
+                        }
                     }
                 }
                 target[key] = sourceValue?.DeepClone();
