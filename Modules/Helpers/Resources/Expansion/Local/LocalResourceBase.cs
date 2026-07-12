@@ -7,52 +7,48 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
 {
     public class LocalResourceBase
     {
-        // CurseForge 专用 fingerprint：过滤空白字节 + MurmurHash2 64-bit
+        // CurseForge 专用 fingerprint：过滤空白字节 + MurmurHash2 (32-bit, seed=1)
         public static long CurseForgeFingerprint(byte[] data)
         {
             var filtered = data.Where(b => b != 0x09 && b != 0x0A && b != 0x0D && b != 0x20).ToArray();
             return MurmurHash2(filtered, 1);
         }
 
-        // MurmurHash2 64-bit (MurmurHash64A)
+        // 标准 Murmur2 算法实现 (32-bit)
         public static long MurmurHash2(byte[] data, uint seed = 1)
         {
-            const ulong m = 0xc6a4a7935bd1e995;
-            const int r = 47;
-            int len = data.Length;
-            ulong h = seed ^ ((ulong)len * m);
+            const uint m = 0x5bd1e995;
+            const int r = 24;
+            uint len = (uint)data.Length;
+            uint h = seed ^ len;
             int i = 0;
 
-            while (len >= 8)
+            while (len >= 4)
             {
-                ulong k = BitConverter.ToUInt64(data, i);
+                uint k = BitConverter.ToUInt32(data, i);
                 k *= m;
                 k ^= k >> r;
                 k *= m;
 
-                h ^= k;
                 h *= m;
+                h ^= k;
 
-                i += 8;
-                len -= 8;
+                i += 4;
+                len -= 4;
             }
 
             switch (len)
             {
-                case 7: h ^= (ulong)data[i + 6] << 48; goto case 6;
-                case 6: h ^= (ulong)data[i + 5] << 40; goto case 5;
-                case 5: h ^= (ulong)data[i + 4] << 32; goto case 4;
-                case 4: h ^= (ulong)data[i + 3] << 24; goto case 3;
-                case 3: h ^= (ulong)data[i + 2] << 16; goto case 2;
-                case 2: h ^= (ulong)data[i + 1] << 8; goto case 1;
+                case 3: h ^= (uint)(data[i + 2] << 16); goto case 2;
+                case 2: h ^= (uint)(data[i + 1] << 8); goto case 1;
                 case 1: h ^= data[i]; h *= m; break;
             }
 
-            h ^= h >> 47;
+            h ^= h >> 13;
             h *= m;
-            h ^= h >> 47;
+            h ^= h >> 15;
 
-            return unchecked((long)h);
+            return h;
         }
 
         /// <summary>
