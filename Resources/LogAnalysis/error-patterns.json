@@ -1078,6 +1078,30 @@
           "actionType": "ReinstallModLoader"
         }
       ]
+    },
+    {
+      "id": "suspected-mod",
+      "category": "ModConflict",
+      "severity": "Error",
+      "i18n": {
+        "zh": { "name": "怀疑 Mod 导致崩溃", "description": "通过堆栈分析，发现某个 Mod 很可能是导致崩溃的原因" },
+        "en": { "name": "Suspected Mod", "description": "Stack analysis indicates a mod is likely causing the crash" }
+      },
+      "regexPatterns": [
+        "suspect"
+      ],
+      "solutions": [
+        {
+          "priority": 1,
+          "description": "通过分析崩溃时的堆栈信息，发现 Mod「{modName}」很可能是导致崩溃的原因。\n请尝试暂时禁用此 Mod 后启动游戏确认。如果问题消失，说明是该 Mod 的兼容性问题或 Bug。",
+          "actionType": "DisableMod"
+        },
+        {
+          "priority": 2,
+          "description": "如果禁用后问题依然存在，请尝试更新此 Mod 到最新版本。",
+          "actionType": "UpdateMod"
+        }
+      ]
     }
   ]
 }

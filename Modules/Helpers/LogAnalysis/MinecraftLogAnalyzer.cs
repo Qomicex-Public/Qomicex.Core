@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -108,7 +109,11 @@ public sealed class MinecraftLogAnalyzer
             var memoryIssues = _memoryIssueAnalyzer.Analyze(lines);
             allIssues.AddRange(memoryIssues);
 
-            // 3. 去重和排序
+            // 3. 堆栈关键词与 Mod 列表交叉匹配
+            var stackModIssues = CrossReferenceStackWithMods(crashReportInfo.LoadedMods, allIssues, lines);
+            allIssues.AddRange(stackModIssues);
+
+            // 4. 去重和排序
             var deduplicatedIssues = DeduplicateAndSortIssues(allIssues);
 
             return Result<LogAnalysisResult, LogAnalysisError>.Success(
@@ -440,5 +445,111 @@ public sealed class MinecraftLogAnalyzer
     {
         var memoryIssues = result.Issues.Where(i => i.Category == IssueCategory.Memory).ToList();
         return MemoryIssueAnalyzer.GenerateMemorySummary(memoryIssues);
+    }
+
+    /// <summary>
+    /// 堆栈关键词与 Mod 列表交叉匹配
+    /// </summary>
+    private static List<DetectedIssue> CrossReferenceStackWithMods(
+        IReadOnlyList<ModInfo>? loadedMods,
+        List<DetectedIssue> existingIssues,
+        string[] lines)
+    {
+        if (loadedMods == null || loadedMods.Count == 0) return [];
+
+        var keywords = ExtractStackKeywords(lines);
+        if (keywords.Count == 0 || keywords.Count > 10) return [];
+
+        var results = new List<DetectedIssue>();
+        foreach (var keyword in keywords)
+        {
+            var matchedMod = FindMatchingMod(keyword, loadedMods);
+            if (matchedMod != null)
+            {
+                var modName = matchedMod.Value.Name ?? matchedMod.Value.Id;
+                results.Add(new DetectedIssue
+                {
+                    PatternId = "suspected-mod",
+                    Name = $"怀疑 {modName} 导致崩溃",
+                    Category = IssueCategory.ModConflict,
+                    Severity = IssueSeverity.Error,
+                    MatchedText = keyword,
+                    LineNumber = 0,
+                    CapturedGroups = new Dictionary<string, string> { ["modName"] = modName },
+                    Solutions =
+                    [
+                        new SuggestedSolution
+                        {
+                            Priority = 1,
+                            Description = $"通过分析崩溃时的堆栈信息，发现 Mod「{modName}」({matchedMod.Value.Id}) 很可能是导致崩溃的原因。\n请尝试暂时禁用此 Mod 后启动游戏确认。如果问题消失，说明是该 Mod 的兼容性问题或 Bug。",
+                            ActionType = "DisableMod",
+                            Parameters = new Dictionary<string, object> { ["modName"] = modName }
+                        },
+                        new SuggestedSolution
+                        {
+                            Priority = 2,
+                            Description = $"如果禁用后问题依然存在，请尝试更新「{modName}」到最新版本。",
+                            ActionType = "UpdateMod",
+                            Parameters = new Dictionary<string, object> { ["modName"] = modName }
+                        }
+                    ]
+                });
+            }
+        }
+        return results;
+    }
+
+    private static List<string> ExtractStackKeywords(string[] lines)
+    {
+        var ignorePrefixes = new HashSet<string>
+        {
+            "java", "sun", "javax", "jdk", "oolloo",
+            "org.lwjgl", "com.sun", "paulscode.sound",
+            "com.mojang", "net.minecraft", "cpw.mods", "com.google",
+            "org.apache", "org.spongepowered", "net.fabricmc", "com.mumfrey",
+            "com.electronwill.nightconfig", "it.unimi.dsi",
+            "MojangTricksIntelDriversForPerformance_javaw"
+        };
+
+        var keywords = new HashSet<string>();
+        foreach (var line in lines)
+        {
+            var trimmed = line.Trim();
+            if (!trimmed.StartsWith("at ")) continue;
+
+            var match = Regex.Match(trimmed, @"at (?<pkg>(?:[a-zA-Z_]\w*\.)+)[a-zA-Z_]");
+            if (!match.Success) continue;
+
+            var pkg = match.Groups["pkg"].Value.TrimEnd('.');
+            var parts = pkg.Split('.');
+            if (parts.Length < 4) continue;
+
+            var prefix = parts[0];
+            if (ignorePrefixes.Contains(prefix)) continue;
+
+            var keyword = string.Join(".", parts.Take(4));
+            keywords.Add(keyword);
+        }
+        return keywords.Take(10).ToList();
+    }
+
+    private static ModInfo? FindMatchingMod(string keyword, IReadOnlyList<ModInfo> mods)
+    {
+        var keywordLower = keyword.ToLowerInvariant();
+        foreach (var mod in mods)
+        {
+            var modId = (mod.Id ?? "").ToLowerInvariant();
+            var modName = (mod.Name ?? "").ToLowerInvariant();
+            var fileName = (mod.FileName ?? "").ToLowerInvariant();
+
+            if (modId.Length > 0 && keywordLower.Contains(modId)) return mod;
+            if (modName.Length > 0 && keywordLower.Contains(modName)) return mod;
+            if (fileName.Length > 0)
+            {
+                var nameNoExt = Path.GetFileNameWithoutExtension(fileName);
+                if (keywordLower.Contains(nameNoExt)) return mod;
+            }
+        }
+        return null;
     }
 }
