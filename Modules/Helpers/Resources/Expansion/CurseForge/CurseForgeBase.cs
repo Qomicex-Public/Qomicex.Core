@@ -231,9 +231,9 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
         /// <param name="fileId"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        internal async Task<CurseForgeFileInfo> GetFileInfo(string gameId,string fileId)
+        internal async Task<CurseForgeFileInfo> GetFileInfo(string modId,string fileId)
         {
-            var url = $"/v1/games/{gameId}/files/{fileId}";
+            var url = $"/v1/mods/{modId}/files/{fileId}";
             var data = await GetData(url, API_KEY);
             if (!string.IsNullOrEmpty(data))
             {
