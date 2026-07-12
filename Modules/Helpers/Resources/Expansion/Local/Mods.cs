@@ -205,6 +205,8 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
             if (hashList.Count > 0)
             {
                 Trace.WriteLine($"[LocalMods] Querying CurseForge fingerprints: {mHashList.Count} hashes");
+                foreach (var h in mHashList)
+                    Trace.WriteLine($"[LocalMods]   CF hash: {h} (0x{h:X16})");
                 try
                 {
                     CurseForgeBase cf = new CurseForgeBase(_apiKey, "", "");
