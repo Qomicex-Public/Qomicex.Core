@@ -170,18 +170,22 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             //解压Forge Jar
             //提取并写入Forge主Jar文件
             var jarMavenPath = MavenToPath(installProfileJson["path"]?.ToString()!);
-            var forgeJar = GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, $@"maven/{jarMavenPath}");
-            var jarFullPath = Path.Combine(this.gameDir, "libraries", jarMavenPath);
-            var jarDir = Path.GetDirectoryName(jarFullPath);
-
-            if (!Directory.Exists(jarDir))
+            Trace.WriteLine($"jarMavenPath:{jarMavenPath}");
+            if (!string.IsNullOrEmpty(jarMavenPath))
             {
-                Directory.CreateDirectory(jarDir!);
-                backDirs.Add(jarDir!);
-            }
+                var forgeJar = GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, $@"maven/{jarMavenPath}");
+                var jarFullPath = Path.Combine(this.gameDir, "libraries", jarMavenPath);
+                var jarDir = Path.GetDirectoryName(jarFullPath);
 
-            backFiles.Add(jarFullPath);
-            File.WriteAllBytes(jarFullPath, forgeJar);
+                if (!Directory.Exists(jarDir))
+                {
+                    Directory.CreateDirectory(jarDir!);
+                    backDirs.Add(jarDir!);
+                }
+
+                backFiles.Add(jarFullPath);
+                File.WriteAllBytes(jarFullPath, forgeJar);
+            }
 
             //下载缺失lib
             var libs = GetMissForgeLibraries(forgeInstallerPath, versionId);
@@ -264,14 +268,14 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                 if (!IsLegacyForgeInstaller(forgeInstallerPath))
                 {
                     throw new Exception("读取Forge安装器内容失败，请检查安装器文件是否正确");
-                } 
+                }
             }
 
             var installProfileJson = JsonNode.Parse(installProfileData!)!.AsObject();
 
             if (string.IsNullOrEmpty(jsonData))
                 jsonData = installProfileJson["versionInfo"]?.ToString() ?? throw new Exception("无法找到版本Json信息");
-            
+
             //处理Json
             try
             {
@@ -486,7 +490,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                 if (!IsLegacyForgeInstaller(forgeInstallerPath))
                 {
                     throw new Exception("读取Forge安装器内容失败，请检查安装器文件是否正确");
-                } 
+                }
             }
 
             //获取缺失 libs
@@ -510,7 +514,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
 
                 if (File.Exists(libInfo.Path))
                 {
-                    if(!string.IsNullOrEmpty(libInfo.Hash))
+                    if (!string.IsNullOrEmpty(libInfo.Hash))
                     {
                         if (GeneralHelper.VerifyFileSha1(libInfo.Path, libInfo.Hash))
                         {
