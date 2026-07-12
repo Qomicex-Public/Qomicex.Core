@@ -155,7 +155,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
         public class CurseForgeInfo
         {
             [JsonPropertyName("id")]
-            public string Id { get; set; } = string.Empty;
+            public int Id { get; set; }
             [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
             [JsonPropertyName("slug")]
