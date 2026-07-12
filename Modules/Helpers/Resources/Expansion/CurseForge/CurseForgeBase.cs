@@ -203,7 +203,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
             [JsonPropertyName("modId")]
             public int Id { get; set; } = 0;
             [JsonPropertyName("relationType")]
-            public int Type { get; set; } = 1;
+            public int Type { get; set; } = 3;
         }
 
         public class CurseForgeFileInfo
