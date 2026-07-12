@@ -125,7 +125,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                         if (cfMeta?.ModId > 0)
                         {
                             var cf = new CurseForge.Shaders(_apiKey);
-                            var file = cf.GetInfoAsync(cfMeta.ModId.ToString()).Result.Files.FirstOrDefault(d => d.FileId == cfMeta.FileId.ToString());
+                            var file = cf.GetInfoAsync(cfMeta.ModId.ToString()).Result.Files.FirstOrDefault(d => d.FileId == cfMeta.FileId);
                             shaderInfo.Version = file?.FileName ?? string.Empty;
                         }
                     }

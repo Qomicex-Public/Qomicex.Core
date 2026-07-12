@@ -182,9 +182,8 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
         }
         public class CurseForgeFilesMeta
         {
-
             [JsonPropertyName("fileId")]
-            public string FileId { get; set; } = string.Empty;
+            public int FileId { get; set; }
             [JsonPropertyName("fileName")]
             public string FileName { get; set; } = string.Empty;
             [JsonPropertyName("releaseType")]

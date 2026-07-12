@@ -245,7 +245,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                         if (cfMeta?.ModId > 0)
                         {
                             var cf = new CurseForge.DataPacks(_apiKey);
-                            var file = cf.GetInfoAsync(cfMeta.ModId.ToString()).Result.Files.FirstOrDefault(d => d.FileId == cfMeta.FileId.ToString());
+                            var file = cf.GetInfoAsync(cfMeta.ModId.ToString()).Result.Files.FirstOrDefault(d => d.FileId == cfMeta.FileId);
                             packInfo.Version = file?.FileName ?? string.Empty;
                         }
                     }
