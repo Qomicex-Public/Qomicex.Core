@@ -41,9 +41,9 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
         /// <param name="gameId"></param>
         /// <param name="fileId"></param>
         /// <returns></returns>
-        public async Task<CurseForgeFileInfo> GetFileInfo(string gameId, string fileId)
+        public async Task<CurseForgeFileInfo> GetFileInfo(string modId, string fileId)
         {
-            return await base.GetFileInfo(gameId, fileId);
+            return await base.GetFileInfo(modId, fileId);
         }
 
         /// <summary>
