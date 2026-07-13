@@ -101,16 +101,16 @@ namespace Qomicex.Core.Modules.Helpers.Installers.Modpacks
             var basePath = _versionIsolation ? Path.Combine(_gameDir, "versions", versionId) : _gameDir;
             foreach (var file in filesArray)
             {
-                string clientEnv = (string?)file["env"]?["client"] ?? "required";
+                string clientEnv = (string?)file!["env"]?["client"] ?? "required";
                 if (clientEnv != "required")
                     continue;
 
                 var fileInfo = new FileInfo
                 {
-                    Path = Path.Combine(basePath, file["path"]?.ToString() ?? string.Empty),
-                    Hash = file["hashes"]?["sha1"]?.ToString() ?? string.Empty,
-                    Url = file["downloads"]?[0]?.ToString() ?? string.Empty,
-                    Size = file["fileSize"]?.GetValue<long>() ?? 0
+                    Path = Path.Combine(basePath, file!["path"]?.ToString() ?? string.Empty),
+                    Hash = file!["hashes"]?["sha1"]?.ToString() ?? string.Empty,
+                    Url = file!["downloads"]?[0]?.ToString() ?? string.Empty,
+                    Size = file!["fileSize"]?.GetValue<long>() ?? 0
                 };
                 info.Files.Add(fileInfo);
             }

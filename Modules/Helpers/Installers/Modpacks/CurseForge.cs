@@ -88,10 +88,10 @@ namespace Qomicex.Core.Modules.Helpers.Installers.Modpacks
 
             foreach (var loader in loaders)
             {
-                if (loader["primary"]?.GetValue<bool>() == true)
+                if (loader!["primary"]?.GetValue<bool>() == true)
                 {
-                    loaderType = loader["id"]?.ToString()?.Split('-')?[0] ?? string.Empty;
-                    info.ModLoaderVersion = loader["id"]?.ToString()?.Split('-')?[1] ?? string.Empty;
+                    loaderType = loader!["id"]?.ToString()?.Split('-')?[0] ?? string.Empty;
+                    info.ModLoaderVersion = loader!["id"]?.ToString()?.Split('-')?[1] ?? string.Empty;
                     break;
                 }
             }
@@ -107,13 +107,13 @@ namespace Qomicex.Core.Modules.Helpers.Installers.Modpacks
             var filesArray = json["files"] as JsonArray ?? [];
             foreach (var file in filesArray)
             {
-                if (file["required"]?.GetValue<bool>() != true)
+                if (file!["required"]?.GetValue<bool>() != true)
                     continue;
 
                 var fileInfo = new FileInfo
                 {
-                    ProjectId = file["projectID"]?.GetValue<int>() ?? 0,
-                    FileId = file["fileID"]?.GetValue<int>() ?? 0,
+                    ProjectId = file!["projectID"]?.GetValue<int>() ?? 0,
+                    FileId = file!["fileID"]?.GetValue<int>() ?? 0,
                 };
                 info.Files.Add(fileInfo);
             }

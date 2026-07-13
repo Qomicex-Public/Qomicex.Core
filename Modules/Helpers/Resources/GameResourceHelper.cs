@@ -48,11 +48,16 @@ namespace Qomicex.Core.Modules.Helpers.Resources
 
             foreach (var version in versionManifest.versions)
             {
+                var type = version.type.ToString();
+                var releaseTime = DateTime.Parse(version.releaseTime.ToString());
+                if (type == "snapshot" && releaseTime.Month == 4 && releaseTime.Day == 1)
+                    type = "april_fools";
+
                 versions.Add(new VersionInfo
                 {
                     Id = version.id.ToString(),
-                    Type = version.type.ToString(),
-                    ReleaseTime = DateTime.Parse(version.releaseTime.ToString()),
+                    Type = type,
+                    ReleaseTime = releaseTime,
                     Url = version.url.ToString()
                 });
             }

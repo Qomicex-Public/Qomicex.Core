@@ -269,7 +269,7 @@ namespace Qomicex.Core.Modules.Helpers.Account
                                 bool isActive = false;
                                 foreach (var item in items)
                                 {
-                                    if (item["name"]?.ToString() == "game_minecraft")
+                                    if (item!["name"]?.ToString() == "game_minecraft")
                                     {
                                         isActive = true;
                                         break;

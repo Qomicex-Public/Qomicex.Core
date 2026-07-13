@@ -120,7 +120,7 @@ public sealed class LogPatternDatabase
             try
             {
                 // 使用 C# 9+ collection expressions
-                var solutions = pattern["solutions"] is JsonArray solutionsArr
+                var solutions = pattern!["solutions"] is JsonArray solutionsArr
                     ? solutionsArr.Select(s => new PatternSolution(
                         Priority: s?["priority"]?.GetValue<int>() ?? 1,
                         Description: s?["description"]?.ToString() ?? "",
@@ -144,7 +144,7 @@ public sealed class LogPatternDatabase
 
                 // 获取正则表达式列表
                 var regexPatterns = pattern["regexPatterns"] is JsonArray regexArr
-                    ? regexArr.Select(r => r?.ToString()).ToList()
+                    ? regexArr.Select(r => r?.ToString() ?? "").ToList()
                     : [];
 
                 // 创建 ErrorPattern

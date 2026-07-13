@@ -120,7 +120,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
             {
                 var json = await _httpClient.GetStringAsync(BuildAdoptiumUrl(majorVersion));
                 var assets = JsonNode.Parse(json)!.AsArray();
-                var matched = assets.FirstOrDefault(asset => IsMatchingAdoptiumBinary(asset, platform, architecture, packageType));
+                var matched = assets.FirstOrDefault(asset => IsMatchingAdoptiumBinary(asset!, platform, architecture, packageType));
                 return matched is null
                     ? null
                     : ToAdoptiumPackageInfo(matched, majorVersion, platform, architecture, packageType);
@@ -282,10 +282,10 @@ namespace Qomicex.Core.Modules.Helpers.Resources
         {
             var packages = JsonNode.Parse(json)!.AsArray();
             var matched = packages
-                .Where(package => IsMatchingZuluPackage(package, platform) && HasZuluOrderingFields(package))
-                .OrderByDescending(package => ToComparableVersion(package["java_version"] as JsonArray))
-                .ThenByDescending(package => ToComparableVersion(package["distro_version"] as JsonArray))
-                .ThenByDescending(package => package["openjdk_build_number"]?.GetValue<int>() ?? int.MinValue)
+                .Where(package => IsMatchingZuluPackage(package!, platform) && HasZuluOrderingFields(package!))
+                .OrderByDescending(package => ToComparableVersion(package!["java_version"] as JsonArray))
+                .ThenByDescending(package => ToComparableVersion(package!["distro_version"] as JsonArray))
+                .ThenByDescending(package => package!["openjdk_build_number"]?.GetValue<int>() ?? int.MinValue)
                 .FirstOrDefault();
             if (matched is null)
             {
@@ -293,7 +293,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
             }
 
             var javaVersion = matched["java_version"] is JsonArray versionParts
-                ? string.Join('.', versionParts.Select(part => part.ToString()))
+                ? string.Join('.', versionParts.Select(part => part!.ToString()))
                 : string.Empty;
 
             return new JavaPackageInfo
@@ -340,7 +340,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources
                 return string.Empty;
             }
 
-            return string.Join('.', versionParts.Select(part => $"{part.GetValue<int>():D8}"));
+            return string.Join('.', versionParts.Select(part => $"{part!.GetValue<int>():D8}"));
         }
 
         private static string BuildBmclapiUrl(int majorVersion)

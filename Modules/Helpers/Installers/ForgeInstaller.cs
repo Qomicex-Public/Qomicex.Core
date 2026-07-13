@@ -335,8 +335,8 @@ namespace Qomicex.Core.Modules.Helpers.Installers
 
             //解压Forge Jar
             //提取并写入Forge主Jar文件
-            var jarMavenPath = MavenToPath(installProfileJson["install"]?["path"]?.ToString()! ?? installProfileJson?["path"]?.ToString()!);
-            var filePath = installProfileJson["install"]?["filePath"]?.ToString() ?? MavenToPath($@"maven/{installProfileJson?["path"]?.ToString()}");
+            var jarMavenPath = MavenToPath(installProfileJson!["install"]?["path"]?.ToString()! ?? installProfileJson!["path"]?.ToString()!);
+            var filePath = installProfileJson!["install"]?["filePath"]?.ToString() ?? MavenToPath($@"maven/{installProfileJson!["path"]?.ToString()}");
             Trace.WriteLine(new { forgeInstallerPath = forgeInstallerPath, filePath = filePath });
             var forgeJar = GeneralHelper.ReadSpecifyFileFromZip(forgeInstallerPath, filePath!);
             var jarFullPath = Path.Combine(this.gameDir, "libraries", jarMavenPath);

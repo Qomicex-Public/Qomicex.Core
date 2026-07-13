@@ -106,7 +106,7 @@ namespace Qomicex.Core.Modules.Helpers.Installers
             {
                 foreach (var cp in classpathArr)
                 {
-                    string cpStr = cp.ToString();
+                    string cpStr = cp!.ToString();
                     var cpParts = cpStr.Split(':');
                     if (cpParts.Length < 3)
                     {

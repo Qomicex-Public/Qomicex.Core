@@ -62,7 +62,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
             {
                 if (a is JsonObject obj && obj["name"] != null)
                     return obj["name"]!.ToString();
-                return a.ToString();
+                return a!.ToString();
             }).ToArray();
         }
 
@@ -175,7 +175,7 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                                     modInfo.Description = firstEntry["description"]?.ToString() ?? "";
                                     modInfo.Version = firstEntry["version"]?.ToString() ?? "";
                                     if (firstEntry["authors"] is JsonArray authorsArray)
-                                        modInfo.Authors = authorsArray.Select(a => a.ToString()).ToArray();
+                                        modInfo.Authors = authorsArray.Select(a => a!.ToString()).ToArray();
                                     else if (firstEntry["authors"] is JsonValue jv && jv.TryGetValue(out string? _))
                                         modInfo.Authors = firstEntry["authors"]!.ToString().Split(',').Select(a => a.Trim()).ToArray();
                                 }

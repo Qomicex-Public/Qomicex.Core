@@ -103,7 +103,7 @@ namespace Qomicex.Core.Modules.Launcher
 
                 if (data.TryGetPropertyValue("inheritsFrom", out JsonNode? inheritsFromToken))
                 {
-                    inheritsFrom = inheritsFromToken.ToString();
+                    inheritsFrom = inheritsFromToken!.ToString();
                 }
 
                 string inheritJsonContent = string.Empty;
@@ -362,7 +362,7 @@ namespace Qomicex.Core.Modules.Launcher
                                 {
                                     foreach (var subVal in valArray)
                                     {
-                                        value += $"{subVal.ToString()} ";
+                                        value += $"{subVal!.ToString()} ";
                                     }
                                 }
                             }
@@ -472,7 +472,7 @@ namespace Qomicex.Core.Modules.Launcher
                     string inheritsFrom = string.Empty;
                     if (json.TryGetPropertyValue("inheritsFrom", out JsonNode? inheritsFromToken))
                     {
-                        inheritsFrom = inheritsFromToken.ToString();
+                        inheritsFrom = inheritsFromToken!.ToString();
                     }
 
                     if (inheritsFrom != string.Empty)
@@ -571,7 +571,7 @@ namespace Qomicex.Core.Modules.Launcher
                                 else if (valToken is JsonArray valArray)
                                 {
                                     foreach (var sub in valArray)
-                                        value += sub.ToString() + " ";
+                                        value += sub!.ToString() + " ";
                                 }
                             }
                         }

@@ -113,17 +113,17 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                 {
                     foreach (var lib in libs)
                     {
-                        Trace.WriteLine($"下载库文件:{lib["name"]}");
+                        Trace.WriteLine($"下载库文件:{lib!["name"]}");
                         var urlDomain = _downloadSource;
-                        if (!string.IsNullOrEmpty(lib["url"]?.ToString()!))
+                        if (!string.IsNullOrEmpty(lib!["url"]?.ToString()!))
                         {
-                            urlDomain = lib["url"]?.ToString()!;
+                            urlDomain = lib!["url"]?.ToString()!;
                         }
-                        if (File.Exists(Path.Combine(gameDir, "libraries", MavenToPath(lib["name"]?.ToString()!))))
+                        if (File.Exists(Path.Combine(gameDir, "libraries", MavenToPath(lib!["name"]?.ToString()!))))
                         {
-                            if (!string.IsNullOrEmpty(lib["sha1"]?.ToString()!))
+                            if (!string.IsNullOrEmpty(lib!["sha1"]?.ToString()!))
                             {
-                                if (GeneralHelper.VerifyFileSha1(Path.Combine(gameDir, "libraries", MavenToPath(lib["name"]?.ToString()!)), lib["sha1"]?.ToString()!))
+                                if (GeneralHelper.VerifyFileSha1(Path.Combine(gameDir, "libraries", MavenToPath(lib!["name"]?.ToString()!)), lib!["sha1"]?.ToString()!))
                                 {
                                     continue;
                                 }
@@ -131,10 +131,10 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                         }
                         missFiles.Add(new LocalResourceHelper.MissFileData
                         {
-                            Name = lib["name"]?.ToString()!,
-                            Path = $"{gameDir}/libraries/{MavenToPath(lib["name"]?.ToString()!)}",
-                            Url = $"{urlDomain}{MavenToPath(lib["name"]?.ToString()!)}",
-                            Sha1 = lib["sha1"]?.ToString()!
+                            Name = lib!["name"]?.ToString()!,
+                            Path = $"{gameDir}/libraries/{MavenToPath(lib!["name"]?.ToString()!)}",
+                            Url = $"{urlDomain}{MavenToPath(lib!["name"]?.ToString()!)}",
+                            Sha1 = lib!["sha1"]?.ToString()!
                         });
                     }
                 }
@@ -172,16 +172,16 @@ namespace Qomicex.Core.Modules.Helpers.Installers
                 {
                     foreach (var lib in libs)
                     {
-                        Trace.WriteLine($"下载库文件:{lib["name"]}");
+                        Trace.WriteLine($"下载库文件:{lib!["name"]}");
                         var urlDomain = _downloadSource;
-                        if (!string.IsNullOrEmpty(lib["url"]?.ToString()!))
+                        if (!string.IsNullOrEmpty(lib!["url"]?.ToString()!))
                         {
-                            urlDomain = lib["url"]?.ToString()!;
+                            urlDomain = lib!["url"]?.ToString()!;
                         }
-                        try { await DownloadFileAsync($"{urlDomain}{MavenToPath(lib["name"]?.ToString()!)}", $"{gameDir}/libraries/{MavenToPath(lib["name"]?.ToString()!)}"); }
+                        try { await DownloadFileAsync($"{urlDomain}{MavenToPath(lib!["name"]?.ToString()!)}", $"{gameDir}/libraries/{MavenToPath(lib!["name"]?.ToString()!)}"); }
                         catch (Exception ex)
                         {
-                            throw new Exception($"下载库文件失败: {lib["name"]}\n{ex.Message}");
+                            throw new Exception($"下载库文件失败: {lib!["name"]}\n{ex.Message}");
                         }
                     }
                 }

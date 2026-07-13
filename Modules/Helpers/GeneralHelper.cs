@@ -235,8 +235,7 @@ namespace Qomicex.Core.Modules.Helpers
                                 // 获取下一个元素作为版本号
                                     if (i + 1 < gameList.Count && gameList[i + 1] is JsonValue jv1 && jv1.TryGetValue(out string? _))
                                 {
-                                    string ver = gameList[i + 1].ToString();
-                                    //types.Add($"NeoForge {ver}");
+                                    string ver = gameList[i + 1]!.ToString();
                                     types.Add(new LoaderInfo { Type = "NeoForge", Version = ver });
                                     NeoForgeFound = true;
                                 }
@@ -254,8 +253,7 @@ namespace Qomicex.Core.Modules.Helpers
                                     // 获取下一个元素作为版本号
                                     if (i + 1 < gameList.Count && gameList[i + 1] is JsonValue jv2 && jv2.TryGetValue(out string? _))
                                     {
-                                        string ver = gameList[i + 1].ToString();
-                                        //types.Add($"NeoForge {ver}");
+                                        string ver = gameList[i + 1]!.ToString();
                                         types.Add(new LoaderInfo { Type = "NeoForge", Version = ver });
                                         NeoForgeFound = true;
                                     }
