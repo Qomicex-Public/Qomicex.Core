@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Qomicex.Core.Common;
@@ -91,15 +90,10 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.CurseForge
             request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (compatible; QomicexCore/1.0)");
 
             var jsonData = JsonSerializer.Serialize(data);
-            Trace.WriteLine($"[CF POST] URL: {fullUrl}");
-            Trace.WriteLine($"[CF POST] Body: {jsonData}");
             request.Content = new StringContent(jsonData, Encoding.UTF8, "application/json");
             var response = await _http.SendAsync(request);
-            var body = await response.Content.ReadAsStringAsync();
-            Trace.WriteLine($"[CF POST] Status: {(int)response.StatusCode}");
-            Trace.WriteLine($"[CF POST] Response: {body[..Math.Min(body.Length, 2000)]}");
             response.EnsureSuccessStatusCode();
-            return body;
+            return await response.Content.ReadAsStringAsync();
         }
 
         public class CurseForgeSearchResult

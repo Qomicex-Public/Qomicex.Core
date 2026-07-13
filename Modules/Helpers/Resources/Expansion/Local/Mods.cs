@@ -204,58 +204,34 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
 
             if (hashList.Count > 0)
             {
-                Trace.WriteLine($"[LocalMods] Querying CurseForge fingerprints: {mHashList.Count} hashes");
-                foreach (var h in mHashList)
-                    Trace.WriteLine($"[LocalMods]   CF hash: {h} (0x{h:X16})");
                 try
                 {
                     CurseForgeBase cf = new CurseForgeBase(_apiKey, "", "");
                     cfDict = await cf.GetInfoFromHashesDictAsync(mHashList);
-                    Trace.WriteLine($"[LocalMods] CurseForge matched: {cfDict.Count} mods");
-                    foreach (var kv in cfDict)
-                        Trace.WriteLine($"[LocalMods]   CF match: hash={kv.Key}, modId={kv.Value.ModId}, fileId={kv.Value.FileId}");
                 }
-                catch (Exception ex)
-                {
-                    Trace.WriteLine($"[LocalMods] CurseForge fingerprint lookup failed: {ex.Message}");
-                }
+                catch { }
 
-                Trace.WriteLine($"[LocalMods] Querying Modrinth hashes: {hashList.Count} hashes");
                 try
                 {
                     ModrinthBase mr = new ModrinthBase();
                     mrDict = await mr.GetProjectVersionsFromHashesDictAsync(hashList);
-                    Trace.WriteLine($"[LocalMods] Modrinth matched: {mrDict.Count} mods");
-                    foreach (var kv in mrDict)
-                        Trace.WriteLine($"[LocalMods]   MR match: hash={kv.Key}, projectId={kv.Value.ProjectId}");
                 }
-                catch (Exception ex)
-                {
-                    Trace.WriteLine($"[LocalMods] Modrinth hash lookup failed: {ex.Message}");
-                }
+                catch { }
             }
 
             foreach (var modInfo in modInfos)
             {
-                Trace.WriteLine($"[LocalMods] Mod: {modInfo.Name}, CFHash={modInfo.CFHash}, Sha1={modInfo.Sha1Hash}");
-
                 if (cfDict.TryGetValue(modInfo.CFHash, out var cfMeta))
                 {
                     modInfo.CurseForgeId = cfMeta.ModId;
                     modInfo.CurseForgeMeta = cfMeta;
-                    Trace.WriteLine($"[LocalMods]   -> CF matched: id={modInfo.CurseForgeId}");
                 }
-                else
-                    Trace.WriteLine($"[LocalMods]   -> CF no match");
 
                 if (mrDict.TryGetValue(modInfo.Sha1Hash, out var mrMeta))
                 {
                     modInfo.ModrinthId = mrMeta.ProjectId ?? "";
                     modInfo.ModrinthMeta = mrMeta;
-                    Trace.WriteLine($"[LocalMods]   -> MR matched: id={modInfo.ModrinthId}");
                 }
-                else
-                    Trace.WriteLine($"[LocalMods]   -> MR no match");
             }
 
             // Parallel icon downloads
@@ -267,43 +243,28 @@ namespace Qomicex.Core.Modules.Helpers.Resources.Expansion.Local
                     {
                         if (!string.IsNullOrEmpty(modInfo.ModrinthId))
                         {
-                            Trace.WriteLine($"[LocalMods] Fetching MR icon for {modInfo.Name} (id={modInfo.ModrinthId})");
                             var mr = new Modrinth.Mods();
                             var project = await mr.GetProjectInfoAsync(modInfo.ModrinthId);
                             if (!string.IsNullOrEmpty(project?.IconUrl))
                             {
                                 modInfo.Icon = await DownloadIconAsBase64(project.IconUrl);
-                                Trace.WriteLine($"[LocalMods]   MR icon OK: {project.IconUrl}");
                                 return;
                             }
-                            Trace.WriteLine($"[LocalMods]   MR no icon URL");
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        Trace.WriteLine($"[LocalMods] MR icon failed: {ex.Message}");
-                    }
+                    catch { }
 
                     try
                     {
                         if (modInfo.CurseForgeId > 0)
                         {
-                            Trace.WriteLine($"[LocalMods] Fetching CF icon for {modInfo.Name} (id={modInfo.CurseForgeId})");
                             var cf = new CurseForge.Mods(_apiKey);
                             var info = await cf.GetModInfoAsync(modInfo.CurseForgeId.ToString());
                             if (!string.IsNullOrEmpty(info?.IconUrl))
-                            {
                                 modInfo.Icon = await DownloadIconAsBase64(info.IconUrl);
-                                Trace.WriteLine($"[LocalMods]   CF icon OK: {info.IconUrl}");
-                            }
-                            else
-                                Trace.WriteLine($"[LocalMods]   CF no icon URL");
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        Trace.WriteLine($"[LocalMods] CF icon failed: {ex.Message}");
-                    }
+                    catch { }
                 });
 
             await Task.WhenAll(iconTasks);
